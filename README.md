@@ -1,124 +1,166 @@
-<img width=100% src="https://capsule-render.vercel.app/api?type=venom&height=300&color=5132a9&text=Parabank&textBg=false&fontColor=De5833"/>
+<img width="100%" src="https://capsule-render.vercel.app/api?type=venom&height=280&color=5132a9&text=Parabank&textBg=false&fontColor=De5833"/>
 
-<div align="left" />
-<br> </br>
-
-🛠️ **Tech Stack:**
-
-![Robot Framework](https://img.shields.io/badge/-Robot%20Framework-000000?style=flat&logo=robotframework&labelColor=FFFFFF)
-![Python](https://img.shields.io/badge/-Python-3776AB?style=flat&logo=python&labelColor=FFFFFF)
-![Selenium](https://img.shields.io/badge/-Selenium-43B02A?style=flat&logo=selenium&labelColor=FFFFFF)
-![VSCode](https://img.shields.io/badge/-VSCode-545454?style=for-the-badge&logo=visualstudiocode&labelColor=FFFFFF)
-![GitHub](https://img.shields.io/badge/-GitHub-545454?style=flat&logo=github)
-![Linux](https://img.shields.io/badge/-Linux-545454?style=flat&logo=linux)
-
-# Objective:
-Automate end-to-end tests for the **Parabank** application using **Robot Framework** + **Selenium** with a Page Object approach.
+<p align="center">
+  <strong>End-to-end test automation for the Parabank application</strong><br/>
+  Built with Robot Framework + Selenium using a Page Object architecture
+</p>
 
 ---
 
-## Prerequirements
+## 🛠 Tech Stack
 
-Before starting, make sure you have the following installed:
+<p align="left">
+  <img src="https://img.shields.io/badge/Robot%20Framework-000000?style=flat&logo=robotframework"/>
+  <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&labelColor=FFFFFF"/>
+  <img src="https://img.shields.io/badge/Selenium-43B02A?style=flat&logo=selenium&labelColor=FFFFFF"/>
+  <img src="https://img.shields.io/badge/VSCode-545454?style=flat&logo=visualstudiocode"/>
+  <img src="https://img.shields.io/badge/GitHub-545454?style=flat&logo=github"/>
+  <img src="https://img.shields.io/badge/Linux-545454?style=flat&logo=linux"/>
+</p>
+
+---
+
+## 🎯 Objective
+
+Automate **end-to-end tests** for the **Parabank** application using  
+**Robot Framework + Selenium**, following a **Page Object Model (POM)** approach  
+to ensure **maintainability**, **reusability**, and **clarity**.
+
+---
+
+## 📋 Prerequisites
+
+Make sure you have the following installed:
 
 - **Python 3.10+**
 - **pip** (comes with Python)
-- **Chrome** (or another supported browser)
-- **ChromeDriver** (compatible with your Chrome version)  
-  - Tip: you can also use **WebDriver Manager** approach depending on your setup.
+- **Google Chrome** (or another supported browser)
+- **ChromeDriver** (compatible with your Chrome version)
+
+> 💡 Tip: You can also use a **WebDriver Manager** approach depending on your setup.
 
 ---
 
-## Installation
+## 🚀 Installation
 
-1. Clone the repository:
-
+### 1️⃣ Clone the repository
 ```bash
 git clone https://github.com/mrlebass/Parabank-Robot.git
-```
+````
 
-2. Navigate to the project directory:
+### 2️⃣ Navigate to the project directory
+
 ```bash
 cd Parabank
 ```
-3. Install dependencies (example using pip):
+
+### 3️⃣ Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
-If you don’t have requirements.txt yet, you can generate it after installing your libs:
+
+> If you don’t have `requirements.txt` yet:
+
+```bash
 pip freeze > requirements.txt
+```
 
-Project Structure
+---
 
-Project organization (based on the repository structure):
+## 🗂 Project Structure
+
 ```pgsql
 Parabank/
- ├── Environments/
- │    ├── dev.robot
- │    └── prod.robot
- ├── PageObject/
- │    ├── BillPay/
- │    ├── Common/
- │    ├── Login/
- │    ├── OpenNewAccount/
- │    ├── Transfer/
- │    └── UpdateProfile/
- ├── Settings/
- │    └── main.robot
- ├── Setup_teardown/
- │    └── setup_teardown.robot
- ├── Results/  (ignored by .gitignore)
- └── README.md
+├── Environments/
+│   ├── dev.robot
+│   └── prod.robot
+│
+├── PageObject/
+│   ├── BillPay/
+│   ├── Common/
+│   ├── Login/
+│   ├── OpenNewAccount/
+│   ├── Transfer/
+│   └── UpdateProfile/
+│
+├── Settings/
+│   └── main.robot
+│
+├── Setup_teardown/
+│   └── setup_teardown.robot
+│
+├── Results/            # execution outputs (ignored by Git)
+└── README.md
 ```
-Folders overview:
 
-Environments/: environment variables and configs (dev/prod).
+### 📁 Folders Overview
 
-PageObject/: page objects and keywords grouped by feature.
+* **Environments/**
+  Environment variables and configurations (dev / prod)
 
-Settings/: main settings/imports/execution entry points.
+* **PageObject/**
+  Page Objects, locators, keywords and test cases grouped by feature
 
-Setup_teardown/: suite/test setup and teardown keywords.
+* **Settings/**
+  Main settings, imports and execution entry points
 
-Results/: execution outputs (log/report/output.xml) — ignored by git.
+* **Setup_teardown/**
+  Suite and test setup/teardown keywords
 
-Running Tests
-Run a full suite
+* **Results/**
+  Execution outputs (`log.html`, `report.html`, `output.xml`)
+  ⛔ *Ignored by Git*
+
+---
+
+## ▶️ Running Tests
+
+### Run the full test suite
+
 ```bash
 robot -d Results Settings/main.robot
 ```
-Run with a specific environment (example)
+
+### Run using a specific environment
+
 ```bash
 robot -d Results -v ENV:dev Settings/main.robot
 ```
-Run a specific test/suite (example)
+
+### Run a specific feature or test suite
+
 ```bash
 robot -d Results PageObject/Login
 ```
-The -d Results option generates the reports inside Results/.
 
-Reports
+> The `-d Results` option ensures all reports are generated inside the `Results/` folder.
+
+---
+
+## 📊 Reports
 
 After execution, Robot Framework generates:
 
-log.html
+* `log.html`
+* `report.html`
+* `output.xml`
 
-report.html
+📌 All reports are stored under `Results/` and are **ignored by Git**.
 
-output.xml
+---
 
-All of them are stored under Results/ and are ignored by Git.
+## 💬 Notes
 
-Comments
+* Project organized using **Page Object Model (POM)** best practices
+* Focus on **clean structure**, **readability**, and **keyword reuse**
+* Execution artifacts are intentionally excluded from version control
 
-Organized using a Page Object structure to improve maintainability.
+---
 
-Test structure aims for clarity and reusability of keywords.
+## 🤝 Contributing
 
-Results/ folder is intentionally ignored to avoid uploading execution artifacts.
+Contributions are welcome!
+Feel free to open **issues** or submit **pull requests** 🚀
 
-Contributing
-
-Contributions are welcome! Feel free to open issues and pull requests.
-
-
+```
