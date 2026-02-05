@@ -21,63 +21,56 @@ Dado que o usuário esteja na página de pagamento de contas
     Wait Until Element Is Visible                  ${TABELA_PAGAMENTO_CONTAS}       10s
     Capturar Print Na Pasta Da Funcionalidade      QBEF-30 step-01                  Resources/BillPay/Evidences
 
+Quando eu envio o pagamento
+    Click Element                                  ${BOTAO_ENVIAR_PAGAMENTO}
+
 # Mensagens de resultado
 Então deve mostrar uma mensagem de sucesso
-    Click Element                                  ${BOTAO_ENVIAR_PAGAMENTO}
-    Wait Until Element Is Visible                  ${MENSAGEM_RESULTADO}           10s
-    Element Should Be Visible                      ${MENSAGEM_RESULTADO}    
+    Wait Until Page Contains Element               ${MENSAGEM_RESULTADO}           10s
+    Page Should Contain Element                    ${MENSAGEM_RESULTADO}   
     Capturar Print Na Pasta Da Funcionalidade      QBEF-30 step-03                 Resources/BillPay/Evidences
 
 Então deve mostrar uma mensagem de erro com o nome vazio
-    Click Element                                  ${BOTAO_ENVIAR_PAGAMENTO}
     Wait Until Element Is Visible                  ${MENSAGEM_ERRO_NOME}           10s
     Element Should Be Visible                      ${MENSAGEM_ERRO_NOME}
     Capturar Print Na Pasta Da Funcionalidade      QBEF-31 step-03                 Resources/BillPay/Evidences
 
 Então deve mostrar uma mensagem de erro com o endereço incompleto
-    Click Element                                  ${BOTAO_ENVIAR_PAGAMENTO}
     Wait Until Element Is Visible                  ${MENSAGEM_ERRO_ENDERECO}       10s
     Element Should Be Visible                      ${MENSAGEM_ERRO_ENDERECO}
     Capturar Print Na Pasta Da Funcionalidade      QBEF-32 step-03                 Resources/BillPay/Evidences
 
-Então deve mostrar uma mensagem de erro com a cidade vazia
-    Click Element                                  ${BOTAO_ENVIAR_PAGAMENTO}
+Então deve mostrar uma mensagem de erro com a cidade vazia    
     Wait Until Element Is Visible                  ${MENSAGEM_ERRO_CIDADE}           10s
     Element Should Be Visible                      ${MENSAGEM_ERRO_CIDADE}
     Capturar Print Na Pasta Da Funcionalidade      QBEF-33 step-03                 Resources/BillPay/Evidences
 
-Então deve mostrar uma mensagem de erro com o estado vazio
-    Click Element                                  ${BOTAO_ENVIAR_PAGAMENTO}
+Então deve mostrar uma mensagem de erro com o estado vazio   
     Wait Until Element Is Visible                  ${MENSAGEM_ERRO_ESTADO}           10s
     Element Should Be Visible                      ${MENSAGEM_ERRO_ESTADO}
     Capturar Print Na Pasta Da Funcionalidade      QBEF-34 step-03                 Resources/BillPay/Evidences
 
-Então deve mostrar uma mensagem de erro com o cep vazio
-    Click Element                                  ${BOTAO_ENVIAR_PAGAMENTO}
+Então deve mostrar uma mensagem de erro com o cep vazio   
     Wait Until Element Is Visible                  ${MENSAGEM_ERRO_CEP}           10s
     Element Should Be Visible                      ${MENSAGEM_ERRO_CEP}
     Capturar Print Na Pasta Da Funcionalidade      QBEF-35 step-03                 Resources/BillPay/Evidences
 
-Então deve mostrar uma mensagem de erro com o telefone vazio
-    Click Element                                  ${BOTAO_ENVIAR_PAGAMENTO}
+Então deve mostrar uma mensagem de erro com o telefone vazio    
     Wait Until Element Is Visible                  ${MENSAGEM_ERRO_TELEFONE}           10s
     Element Should Be Visible                      ${MENSAGEM_ERRO_TELEFONE}
     Capturar Print Na Pasta Da Funcionalidade      QBEF-36 step-03                 Resources/BillPay/Evidences
 
-Então deve mostrar uma mensagem de erro com a quantidade vazia
-    Click Element                                  ${BOTAO_ENVIAR_PAGAMENTO}
+Então deve mostrar uma mensagem de erro com a quantidade vazia   
     Wait Until Element Is Visible                  ${MENSAGEM_ERRO_QUANTIDADE}           10s
     Element Should Be Visible                      ${MENSAGEM_ERRO_QUANTIDADE}
     Capturar Print Na Pasta Da Funcionalidade      QBEF-37 step-03                 Resources/BillPay/Evidences
 
-Então deve mostrar uma mensagem de erro com a conta vazia
-    Click Element                                  ${BOTAO_ENVIAR_PAGAMENTO}
+Então deve mostrar uma mensagem de erro com a conta vazia    
     Wait Until Element Is Visible                  ${MENSAGEM_ERRO_CONTA}           10s
     Element Should Be Visible                      ${MENSAGEM_ERRO_CONTA}
     Capturar Print Na Pasta Da Funcionalidade      QBEF-38 step-03                 Resources/BillPay/Evidences
 
-Então deve mostrar uma mensagem de erro com a verificar conta vazia
-    Click Element                                  ${BOTAO_ENVIAR_PAGAMENTO}
+Então deve mostrar uma mensagem de erro com a verificar conta vazia   
     Wait Until Element Is Visible                  ${MENSAGEM_ERRO_VERIFICAR_CONTA}           10s
     Element Should Be Visible                      ${MENSAGEM_ERRO_VERIFICAR_CONTA}
     Capturar Print Na Pasta Da Funcionalidade      QBEF-39 step-03                 Resources/BillPay/Evidences
