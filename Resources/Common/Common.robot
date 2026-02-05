@@ -1,11 +1,22 @@
 *** Settings ***
-Resource             ../../Settings/main.robot
-Resource             ../../Resources/Login/KeywordsLogin.robot
+## Resources ##
+Resource   ../../Resources/Login/KeywordsLogin.robot
+
+## Libraries ##
+Library    OperatingSystem
+
 
 *** Keywords ***
+# Capturar Print Na Pasta Da Funcionalidade
+    # [Arguments]    ${nome_arquivo}    ${caminho_da_pasta}
+    # Capture Page Screenshot     ${EXECDIR}/${caminho_da_pasta}/${nome_arquivo}.png
+
 Capturar Print Na Pasta Da Funcionalidade
     [Arguments]    ${nome_arquivo}    ${caminho_da_pasta}
-    Capture Page Screenshot     ${EXECDIR}/${caminho_da_pasta}/${nome_arquivo}.png
+    ${dir}=    Set Variable    ${EXECDIR}/${caminho_da_pasta}
+    Create Directory    ${dir}
+    Capture Page Screenshot    ${dir}/${nome_arquivo}.png
+
 
 Esperar Elemento Visivel
     [Arguments]    ${locator}    ${timeout}=10s

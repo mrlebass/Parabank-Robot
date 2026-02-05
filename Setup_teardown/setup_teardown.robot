@@ -1,5 +1,4 @@
 *** Settings ***
-Resource        ../Settings/main.robot
 
 *** Variables ***
 # Defaults (podem ser sobrescritos via CLI: -v BASE_URL:... -v BROWSER:... -v HEADLESS:True)
@@ -11,7 +10,7 @@ ${HEADLESS}     False
 *** Keywords ***
 Dado que eu acesse o site Parabank
     ${options}=    Criar Opcoes Do Browser
-    Open Browser   url=${BASE_URL}    browser=${BROWSER}    options=${options}
+    Open Browser   url=${BASE_URL_QAA}    browser=${BROWSER}    options=${options}
     Maximize Browser Window
     Set Selenium Timeout    10s
 
