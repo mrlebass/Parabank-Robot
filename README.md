@@ -72,11 +72,7 @@ pip freeze > requirements.txt
 
 ```pgsql
 Parabank/
-├── Environments/
-│   ├── dev.robot
-│   └── prod.robot
-│
-├── PageObject/
+├── Resources/
 │   ├── BillPay/
 │   ├── Common/
 │   ├── Login/
@@ -96,11 +92,8 @@ Parabank/
 
 ### 📁 Folders Overview
 
-* **Environments/**
-  Environment variables and configurations (dev / prod)
-
-* **PageObject/**
-  Page Objects, locators, keywords and test cases grouped by feature
+* **Resources/**
+  Resources, locators, keywords and test cases grouped by feature
 
 * **Settings/**
   Main settings, imports and execution entry points
@@ -122,6 +115,12 @@ Parabank/
 robot -d Results Settings/main.robot
 ```
 
+### Run headless mode
+
+```bash
+robot -d Results -v HEADLESS:True Resources/Transfer/TestCasesTransfer.robot
+```
+
 ### Run using a specific environment
 
 ```bash
@@ -131,7 +130,7 @@ robot -d Results -v ENV:dev Settings/main.robot
 ### Run a specific feature or test suite
 
 ```bash
-robot -d Results PageObject/Login
+robot -d Results Resources/Login
 ```
 
 > The `-d Results` option ensures all reports are generated inside the `Results/` folder.
