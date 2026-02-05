@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Selenium-43B02A?style=flat&logo=selenium&labelColor=FFFFFF"/>
   <img src="https://img.shields.io/badge/VSCode-545454?style=flat&logo=visualstudiocode"/>
   <img src="https://img.shields.io/badge/GitHub-545454?style=flat&logo=github"/>
-  <img src="https://img.shields.io/badge/Linux-545454?style=flat&logo=linux"/>
+  <img src="https://img.shields.io/badge/Cross-platform-545454?style=flat&logo=Cross-platform"/>
 </p>
 
 ---
@@ -35,9 +35,12 @@ Make sure you have the following installed:
 - **Python 3.10+**
 - **pip** (comes with Python)
 - **Google Chrome** (or another supported browser)
-- **ChromeDriver** (compatible with your Chrome version)
+- **ChromeDriver** (compatible with your Chrome version) .
 
-> 💡 Tip: You can also use a **WebDriver Manager** approach depending on your setup.
+> 💡 Tip:
+> <br> You can also use a **WebDriver Manager** approach depending on your setup.
+> <br> Consider using WebDriver Manager to avoid manual driver management.
+> <br> ⚠️ Make sure your ChromeDriver version matches your installed Chrome version.
 
 ---
 
@@ -51,7 +54,7 @@ git clone https://github.com/mrlebass/Parabank-Robot.git
 ### 2️⃣ Navigate to the project directory
 
 ```bash
-cd Parabank
+cd Parabank-Robot
 ```
 
 ### 3️⃣ Install dependencies
@@ -59,6 +62,13 @@ cd Parabank
 ```bash
 pip install -r requirements.txt
 ```
+
+```yaml
+requirements.txt:
+robotframework
+robotframework-seleniumlibrary
+selenium
+````
 
 > If you don’t have `requirements.txt` yet:
 
@@ -112,7 +122,12 @@ Parabank/
 ### Run the full test suite
 
 ```bash
-robot -d Results Settings/main.robot
+robot -d Results Resources
+```
+or
+
+```bash
+robot -d Results Resources/**/TestCases*.robot
 ```
 
 ### Run headless mode
@@ -124,7 +139,7 @@ robot -d Results -v HEADLESS:True Resources/Transfer/TestCasesTransfer.robot
 ### Run using a specific environment
 
 ```bash
-robot -d Results -v ENV:dev Settings/main.robot
+robot -d Results -v ENV:QAA Resources/**/TestCases*.robot
 ```
 
 ### Run a specific feature or test suite
@@ -133,19 +148,51 @@ robot -d Results -v ENV:dev Settings/main.robot
 robot -d Results Resources/Login
 ```
 
+### 🏷 Running by Tags
+
+```bash
+# Run only Transfer tests
+robot -d Results -i Transfer Resources
+
+# Run only Positive tests
+robot -d Results -i Positive Resources
+
+# Run only Negative tests
+robot -d Results -i Negative Resources
+
+# Run Transfer + Negative
+robot -d Results -i Transfer -i Negative Resources
+
+# Exclude Negative
+robot -d Results -e Negative Resources
+```
+>  Tags are defined per test case (e.g., Transfer, Positive, Negative)
+> 
+### 🎯 Running a Specific Test
+```bash
+robot -d Results --test "QBEF-21 Tranferência com sucesso" Resources/Transfer/TestCasesTransfer.robot
+```
+
 > The `-d Results` option ensures all reports are generated inside the `Results/` folder.
 
 ---
 
 ## 📊 Reports
 
-After execution, Robot Framework generates:
+Reports are generated automatically after each execution.
 
 * `log.html`
 * `report.html`
 * `output.xml`
 
 📌 All reports are stored under `Results/` and are **ignored by Git**.
+
+---
+
+## 🔄 CI/CD (Optional)
+
+This project can be easily integrated with CI pipelines (e.g., GitHub Actions)
+using headless execution.
 
 ---
 
