@@ -57,7 +57,38 @@ git clone https://github.com/mrlebass/Parabank-Robot.git
 cd Parabank-Robot
 ```
 
-### 3️⃣ Install dependencies
+### 🖥️ Using the Virtual Environment
+
+### 3️⃣ Check if the Python is working
+```bash
+python3 --version
+```
+
+Expected:
+```bash
+Python 3.10.x (ou superior)
+```
+
+### 4️⃣ Create a virtual environment in the project
+
+In the root of the repository (Parabank-Robot):
+```bash
+python3 -m venv .venv
+```
+
+### 5️⃣ Activate the virtualenv
+```bash
+source .venv/bin/activate
+```
+
+You should see something like this:
+```bash
+(.venv) ➜  Parabank-Robot
+```
+
+> ⚠️ This step is essential. Without it, the robot will not appear.
+
+### 6️⃣ Install dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -69,6 +100,10 @@ robotframework
 robotframework-seleniumlibrary
 selenium
 ````
+
+```bash
+python3 -m venv .venv
+```
 
 > If you don’t have `requirements.txt` yet:
 
