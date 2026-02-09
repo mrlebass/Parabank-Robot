@@ -14,6 +14,9 @@ __pycache__/
 .vscode/
 .idea/
 
+# Python virtual env
+.venv/
+
 # Evidências (screenshots automáticos)
 Resources/**/Evidences/
 Resources/**/Evidences/*.png
