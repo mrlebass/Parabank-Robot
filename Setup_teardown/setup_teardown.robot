@@ -10,25 +10,37 @@ ${HEADLESS}     False
 *** Keywords ***
 Dado que eu acesse o site Parabank
     ${options}=    Criar Opcoes Do Browser
-    Open Browser   url=${BASE_URL_QAA}    browser=${BROWSER}    options=${options}
-    Maximize Browser Window
+    Open Browser   ${BASE_URL_QAA}    ${BROWSER}    options=${options}
+    IF    '${HEADLESS}' != 'True'
+        Maximize Browser Window
+    END
     Set Selenium Timeout    10s
 
+
 Criar Opcoes Do Browser
-    # Cria opções (Chrome) e habilita headless somente quando HEADLESS=True
     ${is_chrome}=    Evaluate    '${BROWSER}'.lower() == 'chrome'
     IF    ${is_chrome}
-        ${options}=    Evaluate    __import__('selenium.webdriver').webdriver.ChromeOptions()
-        Call Method    ${options}    add_argument    --disable-dev-shm-usage
-        Call Method    ${options}    add_argument    --no-sandbox
+        ${options}=    Evaluate
+        ...    sys.modules['selenium.webdriver'].ChromeOptions()
+        ...    sys
+
+        ${arg_window}=    Set Variable    --window-size=1920,1080
+        ${arg_dev_shm}=   Set Variable    --disable-dev-shm-usage
+        ${arg_sandbox}=   Set Variable    --no-sandbox
+
+        Call Method    ${options}    add_argument    ${arg_window}
+        Call Method    ${options}    add_argument    ${arg_dev_shm}
+        Call Method    ${options}    add_argument    ${arg_sandbox}
+
         ${headless}=   Evaluate    str('${HEADLESS}').lower() in ['true','1','yes']
         IF    ${headless}
-            Call Method    ${options}    add_argument    --headless=new
+            ${arg_headless}=    Set Variable    --headless=new
+            Call Method    ${options}    add_argument    ${arg_headless}
         END
-        [Return]    ${options}
+
+        RETURN    ${options}
     END
-    # Para outros browsers, retorna None (SeleniumLibrary aceita)
-    [Return]    ${None}
+    RETURN    ${None}
 
 Fechar o navegador
     Close Browser

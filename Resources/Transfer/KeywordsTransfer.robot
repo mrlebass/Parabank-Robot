@@ -34,7 +34,7 @@ E preencher os campos de transferência com os dados completos
     Input Text            ${CAMPO_QUANTIDADE}    ${quantidade}
 
     Capturar Print Na Pasta Da Funcionalidade    QBEF-21 step-02    Resources/Transfer/Evidences
-    [Return]    ${conta_origem}    ${conta_destino}
+    RETURN    ${conta_origem}    ${conta_destino}
 
 
 E preencher os campos de transferência com um dos dados vazios
@@ -113,7 +113,7 @@ Obter Contas Distintas
     END
 
     Should Not Be Equal    ${conta_destino}    ${None}    Só existe 1 conta disponível. Não é possível transferir entre contas distintas.
-    [Return]    ${conta_origem}    ${conta_destino}
+    RETURN    ${conta_origem}    ${conta_destino}
 
 Quando eu envio a transferência
     Click Button    ${BTN_TRANSFERIR}
