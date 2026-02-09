@@ -13,3 +13,7 @@ __pycache__/
 .DS_Store
 .vscode/
 .idea/
+
+# Evidências (screenshots automáticos)
+Resources/**/Evidences/
+Resources/**/Evidences/*.png
