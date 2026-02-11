@@ -2,21 +2,21 @@ name: Robot Framework E2E
 
 on:
   push:
-    branches: [ "main" ]
-    
+    branches: ["main"]
+
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
   workflow_dispatch:
-  schedule:
-    # GitHub usa UTC. Exemplo: todo dia 03:00 UTC (meia-noite em São Paulo ~ UTC-3, sem considerar horário de verão)
-    # - cron: "0 3 * * *"
-  inputs:
-    suite:
-      description: "Suite (ex: Resources/Transfer ou Resources)"
-      required: true
-      default: "Resources"
+    inputs:
+      suite:
+        description: "Suite/pasta para rodar (ex: Resources, Resources/Transfer, Resources/BillPay)"
+        required: true
+        default: "Resources"
 
+  # ✅ Se quiser agendamento, DESCOMENTE o bloco abaixo (senão deixe comentado e não use 'schedule:' vazio)
+  # schedule:
+  #   - cron: "0 3 * * *"  # 03:00 UTC (~00:00 em SP)
 
 jobs:
   robot:
@@ -36,7 +36,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Instala o Chrome no runner (necessário para Selenium abrir o browser no CI)
       - name: Install Google Chrome
         run: |
           sudo apt-get update
@@ -49,8 +48,7 @@ jobs:
       - name: Run Robot Tests (headless)
         run: |
           mkdir -p Results
-          robot -d Results -v HEADLESS:True ${{ inputs.suite }}
-        continue-on-error: false
+          robot -d Results -v HEADLESS:True "${{ github.event.inputs.suite || 'Resources' }}"
 
       - name: Upload Robot Artifacts (report/log/output + evidences)
         if: always()
