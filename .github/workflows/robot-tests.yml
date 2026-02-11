@@ -1,0 +1,58 @@
+name: Robot Framework E2E
+
+on:
+  push:
+    branches: [ "main" ]
+    
+  pull_request:
+    branches: [ "main" ]
+
+  workflow_dispatch:
+  schedule:
+    # GitHub usa UTC. Exemplo: todo dia 03:00 UTC (meia-noite em São Paulo ~ UTC-3, sem considerar horário de verão)
+    - cron: "0 3 * * *"
+
+jobs:
+  robot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Instala o Chrome no runner (necessário para Selenium abrir o browser no CI)
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-linux-keyring.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Run Robot Tests (headless)
+        run: |
+          mkdir -p Results
+          robot -d Results -v HEADLESS:True Resources
+        continue-on-error: false
+
+      - name: Upload Robot Artifacts (report/log/output + evidences)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-results
+          path: |
+            Results/**
+            Resources/**/Evidences/**/*.png
+          if-no-files-found: warn
+          retention-days: 14
