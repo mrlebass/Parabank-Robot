@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
   schedule:
     # GitHub usa UTC. Exemplo: todo dia 03:00 UTC (meia-noite em São Paulo ~ UTC-3, sem considerar horário de verão)
-    - cron: "0 3 * * *"
+    # - cron: "0 3 * * *"
 
 jobs:
   robot:
@@ -53,6 +53,5 @@ jobs:
           name: robot-results
           path: |
             Results/**
-            Resources/**/Evidences/**/*.png
           if-no-files-found: warn
           retention-days: 14
