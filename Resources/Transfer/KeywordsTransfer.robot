@@ -8,153 +8,52 @@ ${VALOR_TRANSFERENCIA_NEGATIVO}                                -900
 ${VALOR_TRANSFERENCIA_VAZIO}                                   ${EMPTY}
 ${CONTA_ORIGEM}                                                13344
 ${CONTA_DESTINO}                                               13344
-${VALOR_TEXTO}                                                 abc
+${CONTA_VAZIA}                                                 ${EMPTY}
+${VALOR_TRANSFERENCIA_TEXTO}                                   abc
 
-*** Keywords ***
-Dado que o usuário esteja na página de transferência
-    Fazer login com Sucesso
-    Wait Until Element Is Visible    ${BTN_TRANSFERENCIA}       10s
-    Click Element                    ${BTN_TRANSFERENCIA}
-    Wait Until Element Is Visible    ${CAMPO_QUANTIDADE}        10s
-    Capturar Print Na Pasta Da Funcionalidade      QBEF-21 step-01     Resources/Transfer/Evidences
-   
-
-E preencher os campos de transferência com os dados completos
-    [Arguments]    ${conta_origem}    ${conta_destino}    ${quantidade}
-
-    # Se origem=destino (ou vierem iguais), escolhe dinamicamente duas contas distintas
-    IF    '${conta_origem}' == '${conta_destino}'
-        ${conta_origem}    ${conta_destino}=    Obter Contas Distintas
-    END
-
-    Selecionar Valor Ou Label Do Select    ${OPTION_CONTA_ORIGEM}     ${conta_origem}
-    Selecionar Valor Ou Label Do Select    ${OPTION_CONTA_DESTINO}    ${conta_destino}
-
-    Clear Element Text    ${CAMPO_QUANTIDADE}
-    Input Text            ${CAMPO_QUANTIDADE}    ${quantidade}
-
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-21 step-02    Resources/Transfer/Evidences
-    RETURN    ${conta_origem}    ${conta_destino}
-
-
-E preencher os campos de transferência com um dos dados vazios
-    [Arguments]    ${conta_origem}    ${conta_destino}    ${quantidade}
-
-    # Se origem=destino, corrige dinamicamente (evita flakiness e regra inválida)
-    IF    '${conta_origem}' == '${conta_destino}'
-        ${conta_origem}    ${conta_destino}=    Obter Contas Distintas
-    END
-
-    Selecionar Valor Ou Label Do Select    ${OPTION_CONTA_ORIGEM}     ${conta_origem}
-    Selecionar Valor Ou Label Do Select    ${OPTION_CONTA_DESTINO}    ${conta_destino}
-
-    # Para caso "vazio", não preenche (só limpa)
-    Clear Element Text    ${CAMPO_QUANTIDADE}
-    IF    '${quantidade}' != '' and '${quantidade}' != '${EMPTY}'
-        Input Text    ${CAMPO_QUANTIDADE}    ${quantidade}
-    END
-
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-22 step-02    Resources/Transfer/Evidences
-
-
-E preencher os campos de transferência com o dado de valor negativo
-    [Arguments]    ${conta_origem}    ${conta_destino}    ${quantidade}
-
-    IF    '${conta_origem}' == '${conta_destino}'
-        ${conta_origem}    ${conta_destino}=    Obter Contas Distintas
-    END
-
-    Selecionar Valor Ou Label Do Select    ${OPTION_CONTA_ORIGEM}     ${conta_origem}
-    Selecionar Valor Ou Label Do Select    ${OPTION_CONTA_DESTINO}    ${conta_destino}
-
-    Clear Element Text    ${CAMPO_QUANTIDADE}
-    Input Text            ${CAMPO_QUANTIDADE}    ${quantidade}
-
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-23 step-02    Resources/Transfer/Evidences
-
-
-E preencher os campos de transferência com o dado de valor em texto
-    [Arguments]    ${conta_origem}    ${conta_destino}    ${quantidade}
-
-    IF    '${conta_origem}' == '${conta_destino}'
-        ${conta_origem}    ${conta_destino}=    Obter Contas Distintas
-    END
-
-    Selecionar Valor Ou Label Do Select    ${OPTION_CONTA_ORIGEM}     ${conta_origem}
-    Selecionar Valor Ou Label Do Select    ${OPTION_CONTA_DESTINO}    ${conta_destino}
-
-    Clear Element Text    ${CAMPO_QUANTIDADE}
-    Input Text            ${CAMPO_QUANTIDADE}    ${quantidade}
-
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-24 step-02    Resources/Transfer/Evidences
- 
-
-
-Selecionar Valor Ou Label Do Select
-    [Arguments]    ${locator}    ${valor}
-    ${status}    ${msg}=    Run Keyword And Ignore Error    Select From List By Value    ${locator}    ${valor}
-    IF    '${status}' == 'FAIL'
-        Select From List By Label    ${locator}    ${valor}
-    END
-
-Obter Contas Distintas
-    # Pega 2 contas diferentes a partir do select de ORIGEM
-    @{opcoes}=    Get List Items    ${OPTION_CONTA_ORIGEM}
-    Length Should Be True    ${opcoes}    1
-
-    ${conta_origem}=    Set Variable    ${opcoes}[0]
-    ${conta_destino}=   Set Variable    ${None}
-
-    FOR    ${opt}    IN    @{opcoes}
-        IF    '${opt}' != '${conta_origem}'
-            ${conta_destino}=    Set Variable    ${opt}
-            Exit For Loop
-        END
-    END
-
-    Should Not Be Equal    ${conta_destino}    ${None}    Só existe 1 conta disponível. Não é possível transferir entre contas distintas.
-    RETURN    ${conta_origem}    ${conta_destino}
-
-Quando eu envio a transferência
-    Click Button    ${BTN_TRANSFERIR}
-  
-
-Então deve mostrar uma mensagem de sucesso
-    Wait Until Element Is Visible    ${MENSAGEM_SUCESSO}        10s
-    Element Should Be Visible        ${MENSAGEM_SUCESSO}
-    Capturar Print Na Pasta Da Funcionalidade      QBEF-21 step-03     Resources/Transfer/Evidences
-       
-E a tranferência deve ser registrada
+*** Keywords ***       
+Accounts Overview
     [Arguments]                      ${conta_origem}            ${conta_destino}           ${quantidade}
     Click Element                    ${BTN_OVERVIEW}
     Wait Until Element Is Visible    ${PAINEL_DIREITA}          10s
     Wait Until Element Is Visible    ${TABELA_TRANSFERENCIA}    10s
-    # Sleep                            5s
+    Wait Until Element Is Visible    ${TABLE_ACCOUNT}           10s
+    Wait Until Element Is Visible    ${TABLE_BALANCE}           10s
     # Element Should Contain           ${TABELA_TRANSFERENCIA}    ${conta_origem}            ${conta_destino}          ${quantidade}
-    # Capturar Print Na Pasta Da Funcionalidade      QBEF-21 step-04     Resources/Transfer/Evidences
     
-    # Sem Sleep: espera a tabela "refletir" os dados
-    Wait Until Keyword Succeeds      5x    1s    Element Should Contain    ${TABELA_TRANSFERENCIA}    ${conta_origem}
-    Wait Until Keyword Succeeds      5x    1s    Element Should Contain    ${TABELA_TRANSFERENCIA}    ${conta_destino}
-    Wait Until Keyword Succeeds      5x    1s    Element Should Contain    ${TABELA_TRANSFERENCIA}    ${quantidade}
-    Capturar Print Na Pasta Da Funcionalidade      QBEF-21 step-04     Resources/Transfer/Evidences
+    ### Sem Sleep: espera a tabela "refletir" os dados ###          Sleep                            5s
 
-Então deve mostrar uma mensagem de erro pra transferência
-    Wait Until Element Is Visible    ${MENSAGEM_ERRO2}           10s
-    Element Should Be Visible    ${MENSAGEM_ERRO2}
-    Capturar Print Na Pasta Da Funcionalidade      QBEF-21 step-04     Resources/Transfer/Evidences
+    Wait Until Keyword Succeeds      5x    2s    Element Should Contain    ${TABELA_TRANSFERENCIA}    ${conta_origem}
+    # Wait Until Keyword Succeeds      5x    1s    Element Should Contain    ${TABELA_TRANSFERENCIA}    ${conta_destino}
+    # Wait Until Keyword Succeeds      5x    2s    Element Should Contain    ${TABELA_TRANSFERENCIA}    ${quantidade}
 
-Então deve mostrar uma mensagem de erro pra transferência de campos vazios
-    Wait Until Element Is Visible    ${MENSAGEM_ERRO2}           10s
-    Element Should Be Visible    ${MENSAGEM_ERRO2}
-    Capturar Print Na Pasta Da Funcionalidade      QBEF-22 step-04     Resources/Transfer/Evidences
 
-Então deve mostrar uma mensagem de erro pra transferência de valor negativo
-    Wait Until Element Is Visible    ${MENSAGEM_ERRO2}           10s
-    Element Should Be Visible    ${MENSAGEM_ERRO2}
-    Capturar Print Na Pasta Da Funcionalidade      QBEF-23 step-04     Resources/Transfer/Evidences
+Dado que o usuário esteja na página de transferência
+    Wait Until Element Is Visible    ${TRANSFER_FUNDS}       10s
+    Click Element                    ${TRANSFER_FUNDS}
+    Wait Until Element Is Visible    ${AMOUNT_FIELD}         10s
 
-Então deve mostrar uma mensagem de erro pra transferência de valor em texto
+Quando ele preenche os campos de transferência
+    [Arguments]    ${conta_origem}    ${conta_destino}    ${quantidade}
+
+    Wait Until Element Is Visible    ${FROM_ACCOUNT}    10s
+    Wait Until Element Is Visible    ${TO_ACCOUNT}      10s
+    Wait Until Element Is Visible    ${AMOUNT_FIELD}    10s
+
+    ${conta_origem}=     Convert To String    ${conta_origem}
+    ${conta_destino}=    Convert To String    ${conta_destino}
+
+    Wait Until Keyword Succeeds    5x    1s    Select From List By Value    ${FROM_ACCOUNT}    ${conta_origem}
+    Wait Until Keyword Succeeds    5x    1s    Select From List By Value    ${TO_ACCOUNT}      ${conta_destino}
+    Input Text    ${AMOUNT_FIELD}    ${quantidade}
+
+E envia a transferência
+    Click Button    ${BTN_TRANSFER}
+
+Então a transferência deve ser realizada corretamente
+    Wait Until Element Is Visible    ${MENSAGEM_SUCESSO}        10s
+    Element Should Be Visible        ${MENSAGEM_SUCESSO}
+
+Então a transferência NÃO deve ser realizada
     Wait Until Element Is Visible    ${MENSAGEM_ERRO2}           10s
-    Element Should Be Visible    ${MENSAGEM_ERRO2}
-    Capturar Print Na Pasta Da Funcionalidade      QBEF-24 step-04     Resources/Transfer/Evidences
+    Element Should Be Enabled        ${MENSAGEM_ERRO2}

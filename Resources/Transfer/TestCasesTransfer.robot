@@ -1,40 +1,68 @@
 *** Settings ***
 Resource            ../../Settings/main.robot
 Resource            KeywordsTransfer.robot   
-Test Setup          Dado que eu acesse o site Parabank
+Test Setup          Iniciar Sessao Autenticada
 Test Teardown       Teardown Padrao
 
 *** Test Cases ***
-QBEF-21 Tranferência com sucesso
+QBEF-21 Transfer Funds Sucess
     [Tags]    Transfer    Positive
     Dado que o usuário esteja na página de transferência
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-01     Transfer       
+    
+    Quando ele preenche os campos de transferência          ${CONTA_ORIGEM}    ${CONTA_DESTINO}    ${VALOR_TRANSFERENCIA}
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-02    Transfer
 
-    ${conta_origem}    ${conta_destino}=    E preencher os campos de transferência com os dados completos
-    ...    ${CONTA_ORIGEM}    ${CONTA_DESTINO}    ${VALOR_TRANSFERENCIA}
+    E envia a transferência
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-03     Transfer
 
-    Quando eu envio a transferência
-    Então deve mostrar uma mensagem de sucesso
-    E a tranferência deve ser registrada    ${conta_origem}    ${conta_destino}    ${VALOR_TRANSFERENCIA}
+    Então a transferência deve ser realizada corretamente
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-04     Transfer
+        
+    Accounts Overview                                       ${CONTA_ORIGEM}    ${CONTA_DESTINO}    ${VALOR_TRANSFERENCIA}
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-05     Transfer
 
-QBEF-22 Tranferência sem dado de valor
+
+QBEF-22 Transfer Funds Error - value empty
     [Tags]    Transfer    Negative
     Dado que o usuário esteja na página de transferência
-    E preencher os campos de transferência com um dos dados vazios        ${CONTA_ORIGEM}    ${CONTA_DESTINO}    ${VALOR_TRANSFERENCIA_VAZIO}
-    Quando eu envio a transferência
-    Então deve mostrar uma mensagem de erro pra transferência de campos vazios
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-01     Transfer
+
+    Quando ele preenche os campos de transferência          ${CONTA_ORIGEM}    ${CONTA_DESTINO}    ${VALOR_TRANSFERENCIA_VAZIO}
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-02     Transfer
+
+    E envia a transferência
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-03     Transfer
+
+    Então a transferência NÃO deve ser realizada
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-04     Transfer
 
 
-QBEF-23 Transferência com valor negativo
+QBEF-23 Transfer Funds Negative value
     [Tags]    Transfer    Negative
     Dado que o usuário esteja na página de transferência
-    E preencher os campos de transferência com o dado de valor negativo        ${CONTA_ORIGEM}    ${CONTA_DESTINO}    ${VALOR_TRANSFERENCIA_NEGATIVO}
-    Quando eu envio a transferência
-    Então deve mostrar uma mensagem de erro pra transferência de valor negativo
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-01     Transfer
+
+    Quando ele preenche os campos de transferência          ${CONTA_ORIGEM}    ${CONTA_DESTINO}    ${VALOR_TRANSFERENCIA_NEGATIVO}
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-02     Transfer
+
+    E envia a transferência
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-03     Transfer
+
+    Então a transferência NÃO deve ser realizada
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-04     Transfer
 
 
-QBEF-24 Transferência com conta valor em Texto
+QBEF-24 Transfer Funds Negative value
     [Tags]    Transfer    Negative
     Dado que o usuário esteja na página de transferência
-    E preencher os campos de transferência com o dado de valor em texto        ${CONTA_ORIGEM}    ${CONTA_DESTINO}    ${VALOR_TEXTO}
-    Quando eu envio a transferência
-    Então deve mostrar uma mensagem de erro pra transferência de valor em texto
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-01     Transfer
+
+    Quando ele preenche os campos de transferência          ${CONTA_ORIGEM}    ${CONTA_DESTINO}    ${VALOR_TRANSFERENCIA_TEXTO}
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-02     Transfer
+
+    E envia a transferência
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-03     Transfer
+
+    Então a transferência NÃO deve ser realizada
+        Capturar Print Na Pasta Da Funcionalidade           ${TEST NAME} step-04     Transfer

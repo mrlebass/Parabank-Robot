@@ -1,6 +1,5 @@
-*** Settings ***
-
 *** Variables ***
+
 # Defaults (podem ser sobrescritos via CLI: -v BASE_URL:... -v BROWSER:... -v HEADLESS:True)
 ${BASE_URL_QAA}     http://parabank.parasoft.com/parabank/index.htm
 ${BASE_URL_PRD}     http://parabank.parasoft.com/parabank/index.htm
