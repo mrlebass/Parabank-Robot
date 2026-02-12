@@ -1,4 +1,4 @@
-name: Robot Framework E2E
+name: Web Regressive E2E
 
 on:
   push:
