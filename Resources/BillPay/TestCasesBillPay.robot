@@ -1,76 +1,117 @@
 *** Settings ***
-Resource           ../../Settings/main.robot
-Resource           KeywordsBillPay.robot
-Test Setup         Dado que eu acesse o site Parabank
-Test Teardown     Teardown Padrao
+Resource            ../../Settings/main.robot
+Resource            KeywordsBillPay.robot
+Test Setup          Iniciar Sessao Autenticada
+Test Teardown       Teardown Padrao
 
 *** Test Cases ***
-QBEF-30 Pagamento de contas com sucesso
+QBEF-30 Bill Pay SUCESS
     [Tags]    BillPay    Positive
     Dado que o usuário esteja na página de pagamento de contas
-    E preencher os campos de pagamento com os dados completos        ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
-    Quando eu envio o pagamento
-    Então deve mostrar uma mensagem de sucesso
+        Capturar Print Na Pasta Da Funcionalidade               ${TEST NAME} step-01     BillPay
 
-QBEF-31 Pagamento de contas com o dado de nome vazio
+    Quando ele preenche os campos de pagamento                  ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
+        Capturar Print Na Pasta Da Funcionalidade               ${TEST NAME} step-02     BillPay 
+    
+    Então o pagamento deve ser realizado
+        Capturar Print Na Pasta Da Funcionalidade               ${TEST NAME} step-03     BillPay 
+
+QBEF-31 Bill Pay FAIL - Not name field
     [Tags]    BillPay    Negative
     Dado que o usuário esteja na página de pagamento de contas
-    E preencher os campos de pagamento com o dado de nome vazio        ${EMPTY}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
-    Quando eu envio o pagamento
-    Então deve mostrar uma mensagem de erro com o nome vazio
+        Capturar Print Na Pasta Da Funcionalidade               ${TEST NAME} step-01     BillPay
+    
+    Quando ele preenche os campos de pagamento                  ${EMPTY}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
+        Capturar Print Na Pasta Da Funcionalidade               ${TEST NAME} step-02     BillPay
+    
+    Então o pagamento NÃO deve ser realizado devido ao campo nome não estar preenchido
+        Capturar Print Na Pasta Da Funcionalidade               ${TEST NAME} step-03     BillPay
 
-QBEF-32 Pagamento de contas com o dado de endereço incompleto
+QBEF-32 Bill Pay FAIL - Incomplete address
     [Tags]    BillPay    Negative
     Dado que o usuário esteja na página de pagamento de contas
-    E preencher os campos de pagamento com o dado de endereço incompleto        ${VALOR_NOME_PAYEE}    ${EMPTY}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
-    Quando eu envio o pagamento
-    Então deve mostrar uma mensagem de erro com o endereço incompleto
+        Capturar Print Na Pasta Da Funcionalidade               ${TEST NAME} step-01     BillPay
 
-QBEF-33 Pagamento de contas com o dado de cidade vazio
+    Quando ele preenche os campos de pagamento                  ${VALOR_NOME_PAYEE}    ${EMPTY}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
+        Capturar Print Na Pasta Da Funcionalidade               ${TEST NAME} step-02     BillPay
+
+    Então o pagamento NÃO deve ser realizado devido ao campo endereço não estar preenchido
+        Capturar Print Na Pasta Da Funcionalidade               ${TEST NAME} step-03     BillPay
+
+QBEF-33 Bill Pay FAIL - Not city
     [Tags]    BillPay    Negative
     Dado que o usuário esteja na página de pagamento de contas
-    E preencher os campos de pagamento com o dado de cidade vazio        ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${EMPTY}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
-    Quando eu envio o pagamento
-    Então deve mostrar uma mensagem de erro com a cidade vazia
+        Capturar Print Na Pasta Da Funcionalidade               ${TEST NAME} step-01     BillPay
 
-QQBEF-34 Pagamento de contas com o dado de estado vazio
+    Quando ele preenche os campos de pagamento                  ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${EMPTY}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
+        Capturar Print Na Pasta Da Funcionalidade               ${TEST NAME} step-02     BillPay
+    
+    Então o pagamento NÃO deve ser realizado devido ao campo cidade não estar preenchido
+        Capturar Print Na Pasta Da Funcionalidade               ${TEST NAME} step-03     BillPay
+
+QBEF-34 Bill Pay FAIL - Not State
     [Tags]    BillPay    Negative
     Dado que o usuário esteja na página de pagamento de contas
-    E preencher os campos de pagamento com o dado de estado vazio        ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${EMPTY}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
-    Quando eu envio o pagamento
-    Então deve mostrar uma mensagem de erro com o estado vazio
+        Capturar Print Na Pasta Da Funcionalidade               ${TEST NAME} step-01     BillPay
+        
+    Quando ele preenche os campos de pagamento                  ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${EMPTY}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
+        Capturar Print Na Pasta Da Funcionalidade               ${TEST NAME} step-02     BillPay
+    
+    Então o pagamento NÃO deve ser realizado devido ao campo estado não estar preenchido
+        Capturar Print Na Pasta Da Funcionalidade               ${TEST NAME} step-03     BillPay
 
-QBEF-35 Pagamento de contas com o dado de CEP vazio
+QBEF-35 Bill Pay FAIL - Not ZIP CODE 
     [Tags]    BillPay    Negative
     Dado que o usuário esteja na página de pagamento de contas
-    E preencher os campos de pagamento com o dado de CEP vazio        ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${EMPTY}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
-    Quando eu envio o pagamento
-    Então deve mostrar uma mensagem de erro com o CEP vazio
+        Capturar Print Na Pasta Da Funcionalidade                   ${TEST NAME} step-01     BillPay
 
-QBEF-36 Pagamento de contas com o dado de telefone vazio
+    Quando ele preenche os campos de pagamento                      ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${EMPTY}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
+        Capturar Print Na Pasta Da Funcionalidade                   ${TEST NAME} step-02     BillPay
+
+    Então o pagamento NÃO deve ser realizado devido ao campo CEP não estar preenchido
+        Capturar Print Na Pasta Da Funcionalidade                   ${TEST NAME} step-03     BillPay
+
+QBEF-36 Bill Pay FAIL - Not Phone Number
     [Tags]    BillPay    Negative
     Dado que o usuário esteja na página de pagamento de contas
-    E preencher os campos de pagamento com o dado de telefone vazio        ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${EMPTY}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
-    Quando eu envio o pagamento
-    Então deve mostrar uma mensagem de erro com o telefone vazio
+        Capturar Print Na Pasta Da Funcionalidade                   ${TEST NAME} step-01     BillPay
 
-QBEF-37 Pagamento de contas com o dado de conta vazio
+
+    Quando ele preenche os campos de pagamento                      ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${EMPTY}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
+        Capturar Print Na Pasta Da Funcionalidade                   ${TEST NAME} step-02     BillPay
+
+    Então o pagamento NÃO deve ser realizado devido ao campo telefone não estar preenchido
+        Capturar Print Na Pasta Da Funcionalidade                   ${TEST NAME} step-03     BillPay
+
+QBEF-37 Bill Pay FAIL - Not Account
     [Tags]    BillPay    Negative
     Dado que o usuário esteja na página de pagamento de contas
-    E preencher os campos de pagamento com o dado de conta vazio        ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${EMPTY}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
-    Quando eu envio o pagamento
-    Então deve mostrar uma mensagem de erro com a conta vazia
+        Capturar Print Na Pasta Da Funcionalidade                   ${TEST NAME} step-01     BillPay
 
-QBEF-38 Pagamento de contas com o dado de verificar conta vazio
+    Quando ele preenche os campos de pagamento                      ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${EMPTY}    ${VALOR_VERIFICAR_CONTA}    ${VALOR_QUANTIDADE}
+        Capturar Print Na Pasta Da Funcionalidade                   ${TEST NAME} step-02     BillPay
+    
+    Então o pagamento NÃO deve ser realizado devido ao campo conta não estar preenchido
+        Capturar Print Na Pasta Da Funcionalidade                   ${TEST NAME} step-03     BillPay
+
+QBEF-38 Bill Pay FAIL - Check Account Empty
     [Tags]    BillPay    Negative
     Dado que o usuário esteja na página de pagamento de contas
-    E preencher os campos de pagamento com o dado de verificar conta vazio        ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${EMPTY}    ${VALOR_QUANTIDADE}
-    Quando eu envio o pagamento
-    Então deve mostrar uma mensagem de erro com a verificar conta vazia
+        Capturar Print Na Pasta Da Funcionalidade                   ${TEST NAME} step-01     BillPay
 
-QBEF-39 Pagamento de contas com o dado de quantidade vazio
+    Quando ele preenche os campos de pagamento                       ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${EMPTY}    ${VALOR_QUANTIDADE}
+        Capturar Print Na Pasta Da Funcionalidade                   ${TEST NAME} step-02     BillPay
+
+    Então o pagamento NÃO deve ser realizado devido ao campo verificar conta não estar preenchido
+        Capturar Print Na Pasta Da Funcionalidade                   ${TEST NAME} step-03     BillPay
+
+QBEF-39 Bill Pay FAIL - Not Value
     [Tags]    BillPay    Negative
     Dado que o usuário esteja na página de pagamento de contas
-    E preencher os campos de pagamento com o dado de quantidade vazio        ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${EMPTY}
-    Quando eu envio o pagamento
-    Então deve mostrar uma mensagem de erro com a quantidade vazia
+        Capturar Print Na Pasta Da Funcionalidade                   ${TEST NAME} step-01     BillPay
+
+    Quando ele preenche os campos de pagamento                      ${VALOR_NOME_PAYEE}    ${VALOR_ENDERECO}    ${VALOR_CIDADE}    ${VALOR_ESTADO}    ${VALOR_CEP}    ${VALOR_TELEFONE}    ${VALOR_CONTA}    ${VALOR_VERIFICAR_CONTA}    ${EMPTY}
+        Capturar Print Na Pasta Da Funcionalidade                   ${TEST NAME} step-02     BillPay
+
+    Então o pagamento NÃO deve ser realizado devido ao campo quantidade não estar preenchido
+        Capturar Print Na Pasta Da Funcionalidade                   ${TEST NAME} step-03     BillPay
