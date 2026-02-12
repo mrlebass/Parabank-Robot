@@ -4,208 +4,98 @@ Resource    LocatorsUpdateProfile.robot
 Resource    ../Transfer/KeywordsTransfer.robot
 
 *** Variables ***
-${FIRSTNAME}    Marco
-${LASTNAME}     Macedo
+${FIRSTNAME}    Leandro
+${LASTNAME}     Estevao
 ${STREET}       Avenida Paulista
 ${CITY}         São Paulo
 ${STATE}        SP
-${ZIP}          12345
-${PHONE}        11999999999
+${ZIP}          03080
+${PHONE}        1197070096
 
 *** Keywords ***
 
-E desejo atualizar as informações do meu perfil
-    Wait Until Element Is Visible    ${LINK_PERFIL}
+Dado que o usuário esteja na tela de atualização cadastral
+    Wait Until Element Is Visible    ${LINK_PERFIL}     10s
     Click Element    ${LINK_PERFIL}
-
-Dado que o usuário deseja fazer uma atualização cadastral do seu primeiro nome
-    Fazer login com Sucesso
-    E desejo atualizar as informações do meu perfil
-
-Dado que o usuário deseja fazer uma atualização cadastral do seu sobrenome
-    Fazer login com Sucesso
-    E desejo atualizar as informações do meu perfil
-
-Dado que o usuário deseja fazer uma atualização cadastral da sua rua
-    Fazer login com Sucesso
-    E desejo atualizar as informações do meu perfil
-
-Dado que o usuário deseja fazer uma atualização cadastral da sua cidade
-    Fazer login com Sucesso
-    E desejo atualizar as informações do meu perfil
-
-Dado que o usuário deseja fazer uma atualização cadastral do seu estado
-    Fazer login com Sucesso
-    E desejo atualizar as informações do meu perfil
-
-Dado que o usuário deseja fazer uma atualização cadastral do seu CEP
-    Fazer login com Sucesso
-    E desejo atualizar as informações do meu perfil
-
-Dado que o usuário deseja fazer uma atualização cadastral do seu telefone
-    Fazer login com Sucesso
-    E desejo atualizar as informações do meu perfil
-
-#### Caminhos Felizes ####
-
-Quando atualizo o campo primeiro nome corretamente
+    Wait Until Element Is Visible    ${PAINEL_PROFILE}  10s
     Sleep     2s
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-41 step-01    Resources/UpdateProfile/Evidences
-    Input Text    ${INPUT_FIRSTNAME}    ${FIRSTNAME}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-41 step-02    Resources/UpdateProfile/Evidences
-    Click Button    ${BOTAO_SALVAR}
 
-Então o sistema deve atualizar o campo primeiro nome
+Quando ele realiza a atualização cadastral do campo first name
+    [Arguments]             ${field_upload}
+    Clear Element Text      ${INPUT_FIRSTNAME} 
+    Input Text              ${INPUT_FIRSTNAME}    ${field_upload}
+    Click Button            ${BOTAO_SALVAR}
+
+Quando ele realiza a atualização cadastral do campo last name
+    [Arguments]             ${field_upload}
+    Clear Element Text      ${INPUT_LASTNAME} 
+    Input Text              ${INPUT_LASTNAME}    ${field_upload}
+    Click Button            ${BOTAO_SALVAR}
+
+Quando ele realiza a atualização cadastral do campo address
+    [Arguments]             ${field_upload}
+    Clear Element Text      ${INPUT_STREET} 
+    Input Text              ${INPUT_STREET}    ${field_upload}
+    Click Button            ${BOTAO_SALVAR}
+
+Quando ele realiza a atualização cadastral do campo city
+    [Arguments]             ${field_upload}
+    Clear Element Text      ${INPUT_CITY} 
+    Input Text              ${INPUT_CITY}    ${field_upload}
+    Click Button            ${BOTAO_SALVAR}
+
+Quando ele realiza a atualização cadastral do campo state
+    [Arguments]             ${field_upload}
+    Clear Element Text      ${INPUT_STATE} 
+    Input Text              ${INPUT_STATE}    ${field_upload}
+    Click Button            ${BOTAO_SALVAR}
+
+Quando ele realiza a atualização cadastral do campo zipcode
+    [Arguments]             ${field_upload}
+    Clear Element Text      ${INPUT_ZIP} 
+    Input Text              ${INPUT_ZIP}    ${field_upload}
+    Click Button            ${BOTAO_SALVAR}
+
+Quando ele realiza a atualização cadastral do campo phone number
+    [Arguments]             ${field_upload}
+    Clear Element Text      ${INPUT_PHONE} 
+    Input Text              ${INPUT_PHONE}    ${field_upload}
+    Click Button            ${BOTAO_SALVAR}
+
+Então o sistema deve realizar a atualização do campo
     Wait Until Element Is Visible    ${CONFIRMAÇÃO_ATUALIZAÇÃO}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-41 step-03    Resources/UpdateProfile/Evidences
-  
 
-Quando atualizo o campo sobrenome corretamente
-    Sleep     2s
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-43 step-01    Resources/UpdateProfile/Evidences
-    Input Text    ${INPUT_LASTNAME}    ${LASTNAME}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-43 step-02    Resources/UpdateProfile/Evidences
-    Click Button    ${BOTAO_SALVAR}
+Quando ele realiza a atualização cadastral inválida
+    [Arguments]             ${first_name}   ${last_name}    ${street}   ${city}   ${state}    ${zip}
+    Sleep         2s
+    Input Text              ${INPUT_FIRSTNAME}    ${first_name}
+    Input Text              ${INPUT_LASTNAME}     ${last_name}
+    Input Text              ${INPUT_STREET}       ${street}
+    Input Text              ${INPUT_CITY}         ${city}
+    Input Text              ${INPUT_STATE}        ${state}
+    Input Text              ${INPUT_ZIP}          ${zip}
+    Click Button            ${BOTAO_SALVAR}       
 
-Então o sistema deve atualizar o campo sobrenome
-    Wait Until Element Is Visible    ${CONFIRMAÇÃO_ATUALIZAÇÃO}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-43 step-03    Resources/UpdateProfile/Evidences
-  
-
-
-Quando atualizo o campo rua corretamente
-    Sleep     2s
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-45 step-01    Resources/UpdateProfile/Evidences
-    Input Text    ${INPUT_STREET}    ${STREET}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-45 step-02    Resources/UpdateProfile/Evidences
-    Click Button    ${BOTAO_SALVAR}
-
-Então o sistema deve atualizar o campo rua
-    Wait Until Element Is Visible    ${CONFIRMAÇÃO_ATUALIZAÇÃO}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-45 step-03    Resources/UpdateProfile/Evidences
-  
-
-
-Quando atualizo o campo cidade corretamente
-    Sleep     2s
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-47 step-01    Resources/UpdateProfile/Evidences
-    Input Text    ${INPUT_CITY}    ${CITY}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-47 step-02    Resources/UpdateProfile/Evidences
-    Click Button    ${BOTAO_SALVAR}
-
-Então o sistema deve atualizar o campo cidade
-    Wait Until Element Is Visible    ${CONFIRMAÇÃO_ATUALIZAÇÃO}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-47 step-03    Resources/UpdateProfile/Evidences
-  
-
-
-Quando atualizo o campo estado corretamente
-    Sleep     2s
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-49 step-01    Resources/UpdateProfile/Evidences
-    Input Text    ${INPUT_STATE}    ${STATE}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-49 step-02    Resources/UpdateProfile/Evidences
-    Click Button    ${BOTAO_SALVAR}
-
-Então o sistema deve atualizar o campo estado
-    Wait Until Element Is Visible    ${CONFIRMAÇÃO_ATUALIZAÇÃO}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-49 step-03    Resources/UpdateProfile/Evidences
-  
-
-
-Quando atualizo o campo CEP corretamente
-    Sleep     2s
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-51 step-01    Resources/UpdateProfile/Evidences
-    Input Text    ${INPUT_ZIP}    ${ZIP}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-51 step-02    Resources/UpdateProfile/Evidences
-    Click Button    ${BOTAO_SALVAR}
-
-Então o sistema deve atualizar o campo CEP
-    Wait Until Element Is Visible    ${CONFIRMAÇÃO_ATUALIZAÇÃO}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-51 step-03    Resources/UpdateProfile/Evidences
-  
-
-
-Quando atualizo o campo telefone corretamente
-    Sleep     2s
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-53 step-01    Resources/UpdateProfile/Evidences
-    Input Text    ${INPUT_PHONE}    ${PHONE}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-53 step-02    Resources/UpdateProfile/Evidences
-    Click Button    ${BOTAO_SALVAR}
-
-Então o sistema deve atualizar o campo telefone
-    Wait Until Element Is Visible    ${CONFIRMAÇÃO_ATUALIZAÇÃO}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-53 step-03    Resources/UpdateProfile/Evidences
-  
-
-
-#### Caminhos Alternativos ####
-
-Quando deixo o campo primeiro nome vazio
-    Sleep     2s
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-42 step-01    Resources/UpdateProfile/Evidences
-    Input Text    ${INPUT_FIRSTNAME}    ${EMPTY}
-    Click Button    ${BOTAO_SALVAR}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-42 step-02    Resources/UpdateProfile/Evidences
-
-Então o sistema deve exibir a mensagem de erro para o campo primeiro nome
+Então o sistema NÃO deve realizar a atualização e apresentar erro do campo fisrt name
     Element Should Be Visible    ${ERRO_FIRSTNAME}
 
-Quando deixo o campo sobrenome vazio
-    Sleep     2s
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-44 step-01    Resources/UpdateProfile/Evidences
-    Input Text    ${INPUT_LASTNAME}    ${EMPTY}
-    Click Button    ${BOTAO_SALVAR}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-44 step-02    Resources/UpdateProfile/Evidences
-
-Então o sistema deve exibir a mensagem de erro para o campo sobrenome
+Então o sistema NÃO deve realizar a atualização e apresentar erro do campo last name
     Element Should Be Visible    ${ERRO_LASTNAME}
 
-Quando deixo o campo rua vazio
-    Sleep     2s
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-46 step-01    Resources/UpdateProfile/Evidences
-    Input Text    ${INPUT_STREET}    ${EMPTY}
-    Click Button    ${BOTAO_SALVAR}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-46 step-02    Resources/UpdateProfile/Evidences
-
-Então o sistema deve exibir a mensagem de erro para o campo rua
+Então o sistema NÃO deve realizar a atualização e apresentar erro do campo street
     Element Should Be Visible    ${ERRO_STREET}
 
-Quando deixo o campo cidade vazio
-    Sleep     2s
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-48 step-01    Resources/UpdateProfile/Evidences
-    Input Text    ${INPUT_CITY}    ${EMPTY}
-    Click Button    ${BOTAO_SALVAR}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-48 step-02    Resources/UpdateProfile/Evidences
-
-Então o sistema deve exibir a mensagem de erro para o campo cidade
+Então o sistema NÃO deve realizar a atualização e apresentar erro do campo city
     Element Should Be Visible    ${ERRO_CITY}
 
-Quando deixo o campo estado vazio
-    Sleep     2s
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-50 step-01    Resources/UpdateProfile/Evidences
-    Input Text    ${INPUT_STATE}    ${EMPTY}
-    Click Button    ${BOTAO_SALVAR}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-50 step-02    Resources/UpdateProfile/Evidences
 
-Então o sistema deve exibir a mensagem de erro para o campo estado
+Então o sistema NÃO deve realizar a atualização e apresentar erro do campo state
     Element Should Be Visible    ${ERRO_STATE}
 
-Quando deixo o campo CEP vazio
-    Sleep     2s
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-52 step-01    Resources/UpdateProfile/Evidences
-    Input Text    ${INPUT_ZIP}    ${EMPTY}
-    Click Button    ${BOTAO_SALVAR}
-    Capturar Print Na Pasta Da Funcionalidade    QBEF-52 step-02    Resources/UpdateProfile/Evidences
-
-Então o sistema deve exibir a mensagem de erro para o campo CEP
+Então o sistema NÃO deve realizar a atualização e apresentar erro do campo zipcode
     Element Should Be Visible    ${ERRO_ZIP}
 
-# Quando deixo o campo telefone vazio
-#     Sleep     2s
-#     Capturar Print Na Pasta Da Funcionalidade    QBEF-54 step-01    Resources/UpdateProfile/Evidences
-#     Input Text    ${INPUT_PHONE}    ${EMPTY}
-#     Click Button    ${BOTAO_SALVAR}
-#     Capturar Print Na Pasta Da Funcionalidade    QBEF-54 step-02    Resources/UpdateProfile/Evidences
 
-# Então o sistema deve exibir a mensagem de erro para o campo telefone
+#     Input Text    ${INPUT_PHONE}      ${phone}
+# Então o sistema NÃO deve realizar a atualização e apresentar erro do campo phone number
 #     Element Should Be Visible    ${ERRO_PHONE}

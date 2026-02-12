@@ -3,6 +3,7 @@ Library    SeleniumLibrary
 
 *** Variables ***
 ${LINK_PERFIL}                   //*[@id="leftPanel"]/ul/li[6]/a
+${PAINEL_PROFILE}                css:div[id="updateProfileForm"]
 ${INPUT_FIRSTNAME}               //*[@id="customer.firstName"]
 ${INPUT_LASTNAME}                //*[@id="customer.lastName"]
 ${INPUT_STREET}                  //*[@id="customer.address.street"]
