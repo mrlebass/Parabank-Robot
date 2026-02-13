@@ -10,7 +10,6 @@ ${TIPO_CONTA}           SAVINGS
 Dado que o usuário está na página de abertura de conta
     Wait Until Element Is Visible    ${LINK_NOVA_CONTA}
     Click Element    ${LINK_NOVA_CONTA}
-    Sleep       2s
     ${PRIMEIRA_OPCAO_CONTA}=    Get Text    ${SELECT_TIPO_CONTA}/option[1]  
     Should Be Equal    ${PRIMEIRA_OPCAO_CONTA}    CHECKING
     Wait Until Element Is Visible    ${SELECT_TIPO_CONTA}
@@ -18,7 +17,6 @@ Dado que o usuário está na página de abertura de conta
 
 Quando ele solicita a criação de uma nova conta do tipo SAVINGS
     Select From List By Label    ${SELECT_TIPO_CONTA}    ${TIPO_CONTA}
-    Sleep    2s
     Click Button    ${BOTAO_ABRIR_CONTA}
 
 Então a conta deve ser criada com sucesso

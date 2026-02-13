@@ -18,7 +18,6 @@ Dado que o usuário esteja na tela de atualização cadastral
     Wait Until Element Is Visible    ${LINK_PERFIL}     10s
     Click Element    ${LINK_PERFIL}
     Wait Until Element Is Visible    ${PAINEL_PROFILE}  10s
-    Sleep     2s
 
 Quando ele realiza a atualização cadastral do campo first name
     [Arguments]             ${field_upload}
@@ -67,7 +66,6 @@ Então o sistema deve realizar a atualização do campo
 
 Quando ele realiza a atualização cadastral inválida
     [Arguments]             ${first_name}   ${last_name}    ${street}   ${city}   ${state}    ${zip}
-    Sleep         2s
     Input Text              ${INPUT_FIRSTNAME}    ${first_name}
     Input Text              ${INPUT_LASTNAME}     ${last_name}
     Input Text              ${INPUT_STREET}       ${street}
