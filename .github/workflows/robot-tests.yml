@@ -9,17 +9,79 @@ on:
 
   workflow_dispatch:
     inputs:
-      suite:
-        description: "Suite/pasta para rodar (ex: Resources, Resources/Transfer, Resources/BillPay)"
+      mode:
+        description: "Modo de execução"
         required: true
+        default: "parallel"
+        type: choice
+        options:
+          - parallel
+          - single
+      suite:
+        description: "Suite/pasta (somente para mode=single). Ex: Resources/Transfer"
+        required: false
         default: "Resources"
 
-  # ✅ Se quiser agendamento, DESCOMENTE o bloco abaixo (senão deixe comentado e não use 'schedule:' vazio)
-  # schedule:
-  #   - cron: "0 3 * * *"  # 03:00 UTC (~00:00 em SP)
+  # Agendamento (UTC). Ex: 03:00 UTC (~00:00 SP)
+  schedule:
+    - cron: "0 3 * * *"
 
 jobs:
-  robot:
+  robot-parallel:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.mode == 'parallel' }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - Resources/Login
+          - Resources/Transfer
+          - Resources/BillPay
+          - Resources/OpenNewAccount
+          - Resources/UpdateProfile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-linux-keyring.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Run Robot (headless) - matrix suite
+        run: |
+          OUT="Results/${{ matrix.suite }}"
+          mkdir -p "$OUT"
+          robot -d "$OUT" -v HEADLESS:True "${{ matrix.suite }}"
+
+      - name: Upload artifacts (per suite)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-results-${{ matrix.suite }}
+          path: |
+            Results/${{ matrix.suite }}/**
+          if-no-files-found: warn
+          retention-days: 14
+
+  robot-single:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'single' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -45,17 +107,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
 
-      - name: Run Robot Tests (headless)
+      - name: Run Robot (headless) - single suite
         run: |
-          mkdir -p Results
-          robot -d Results -v HEADLESS:True "${{ github.event.inputs.suite || 'Resources' }}"
+          OUT="Results/single"
+          mkdir -p "$OUT"
+          robot -d "$OUT" -v HEADLESS:True "${{ inputs.suite }}"
 
-      - name: Upload Robot Artifacts (report/log/output + evidences)
+      - name: Upload artifacts (single)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: robot-results
+          name: robot-results-single
           path: |
-            Results/**
+            Results/single/**
           if-no-files-found: warn
           retention-days: 14
