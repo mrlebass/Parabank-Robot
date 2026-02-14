@@ -1,0 +1,172 @@
+name: Web Regressive E2E (AUTO)
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  robot-parallel:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - Resources/Login
+          - Resources/Transfer
+          - Resources/BillPay
+          - Resources/OpenNewAccount
+          - Resources/UpdateProfile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-linux-keyring.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Run Robot (headless) - AUTO parallel
+        shell: bash
+        run: |
+          set +e
+          SUITE="${{ matrix.suite }}"
+          SLUG="${SUITE//\//-}"
+          OUT="Results/${SLUG}"
+          mkdir -p "$OUT"
+          robot -d "$OUT" -v HEADLESS:True "$SUITE"
+          echo "ROBOT_EXIT_${SLUG}=$?" >> $GITHUB_ENV
+          set -e
+
+      - name: Upload artifacts (per suite)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-results-${{ matrix.suite && join(split(matrix.suite, '/'), '-') }}
+          path: Results/**
+          retention-days: 14
+
+  publish-pages:
+    if: always()
+    needs: [robot-parallel]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: _artifacts
+
+      - name: Prepare site folder for THIS run
+        shell: bash
+        run: |
+          RUN="${{ github.run_id }}"
+          rm -rf site
+          mkdir -p "site/runs/$RUN" "site/latest"
+
+          # Copia artifacts preservando subpastas
+          # Cada artifact vem como: _artifacts/<artifactName>/<files...>
+          for d in _artifacts/*; do
+            [ -d "$d" ] || continue
+            name="$(basename "$d")"
+            # coloca cada suite em subpasta (evita sobrescrita de log.html)
+            mkdir -p "site/runs/$RUN/$name" "site/latest/$name"
+            cp -R "$d/"* "site/runs/$RUN/$name/" 2>/dev/null || true
+            cp -R "$d/"* "site/latest/$name/" 2>/dev/null || true
+          done
+
+          # Index com links relativos (sem 404)
+          cat > site/index.html <<'HTML'
+          <!doctype html>
+          <html>
+            <head><meta charset="utf-8"><title>Robot Reports</title></head>
+            <body>
+              <h1>Robot Framework Reports</h1>
+              <p><b>Latest:</b> <a href="./latest/">abrir</a></p>
+              <p><b>Runs:</b> <a href="./runs/">abrir histórico</a></p>
+            </body>
+          </html>
+          HTML
+
+          cat > site/latest/index.html <<'HTML'
+          <!doctype html>
+          <html><head><meta charset="utf-8"><title>Latest</title></head>
+          <body>
+            <h2>Latest run</h2>
+            <ul>
+HTML
+          for suiteDir in site/latest/*; do
+            [ -d "$suiteDir" ] || continue
+            bn="$(basename "$suiteDir")"
+            echo "<li><b>$bn</b> — <a href=\"./$bn/log.html\">log</a> | <a href=\"./$bn/report.html\">report</a></li>" >> site/latest/index.html
+          done
+          cat >> site/latest/index.html <<'HTML'
+            </ul>
+            <p><a href="../">voltar</a></p>
+          </body></html>
+HTML
+
+          mkdir -p site/runs
+          cat > site/runs/index.html <<HTML
+          <!doctype html><html><head><meta charset="utf-8"><title>Runs</title></head>
+          <body>
+            <h2>Runs</h2>
+            <ul>
+              <li><a href="./$RUN/">$RUN</a></li>
+            </ul>
+            <p><a href="../">voltar</a></p>
+          </body></html>
+HTML
+
+          mkdir -p "site/runs/$RUN"
+          cat > "site/runs/$RUN/index.html" <<'HTML'
+          <!doctype html>
+          <html><head><meta charset="utf-8"><title>This Run</title></head>
+          <body>
+            <h2>This run</h2>
+            <ul>
+HTML
+          for suiteDir in "site/runs/$RUN"/*; do
+            [ -d "$suiteDir" ] || continue
+            bn="$(basename "$suiteDir")"
+            echo "<li><b>$bn</b> — <a href=\"./$bn/log.html\">log</a> | <a href=\"./$bn/report.html\">report</a></li>" >> "site/runs/$RUN/index.html"
+          done
+          cat >> "site/runs/$RUN/index.html" <<'HTML'
+            </ul>
+            <p><a href="../">voltar</a></p>
+          </body></html>
+HTML
+
+      - name: Publish to gh-pages (preserve history)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: site
+          keep_files: true
