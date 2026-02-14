@@ -1,0 +1,311 @@
+name: Robot - Manual (Select Suites)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Modo de execução"
+        type: choice
+        required: true
+        default: parallel
+        options: [parallel, single]
+
+      run_login:
+        description: "Rodar feature Login?"
+        type: boolean
+        required: false
+        default: true
+      run_transfer:
+        description: "Rodar feature Transfer?"
+        type: boolean
+        required: false
+        default: true
+      run_billpay:
+        description: "Rodar feature BillPay?"
+        type: boolean
+        required: false
+        default: true
+      run_opennewaccount:
+        description: "Rodar feature OpenNewAccount?"
+        type: boolean
+        required: false
+        default: true
+      run_updateprofile:
+        description: "Rodar feature UpdateProfile?"
+        type: boolean
+        required: false
+        default: true
+
+      tag_filter:
+        description: "Filtro por tag"
+        type: choice
+        required: true
+        default: all
+        options: [all, positive, negative, custom]
+
+      custom_tags:
+        description: "Se tag_filter=custom: informe tags separadas por vírgula (ex: Positive,Smoke)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: "3.11"
+  RESULTS_DIR: "Results"
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.out.outputs.mode }}
+      matrix: ${{ steps.out.outputs.matrix }}
+      tag_args: ${{ steps.out.outputs.tag_args }}
+    steps:
+      - name: Build matrix + tag args
+        id: out
+        shell: bash
+        run: |
+          set -e
+
+          MODE="${{ github.event.inputs.mode }}"
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+
+          # ---------- tag args ----------
+          TAG_FILTER="${{ github.event.inputs.tag_filter }}"
+          CUSTOM_TAGS="${{ github.event.inputs.custom_tags }}"
+
+          TAG_ARGS=""
+          if [ "$TAG_FILTER" = "positive" ]; then
+            TAG_ARGS='--include Positive'
+          elif [ "$TAG_FILTER" = "negative" ]; then
+            TAG_ARGS='--include Negative'
+          elif [ "$TAG_FILTER" = "custom" ]; then
+            # aceita "A,B,C" => --include A --include B --include C
+            IFS=',' read -ra arr <<< "$CUSTOM_TAGS"
+            for t in "${arr[@]}"; do
+              tt="$(echo "$t" | xargs)"
+              [ -n "$tt" ] && TAG_ARGS="$TAG_ARGS --include $tt"
+            done
+            TAG_ARGS="$(echo "$TAG_ARGS" | xargs)"
+          fi
+          echo "tag_args=$TAG_ARGS" >> "$GITHUB_OUTPUT"
+
+          # ---------- suites ----------
+          # single: roda tudo em 1 job (Resources)
+          if [ "$MODE" = "single" ]; then
+            echo 'matrix=[{"path":"Resources","slug":"Resources-All"}]' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # parallel: respeita checkboxes
+          suites=()
+
+          [ "${{ github.event.inputs.run_login }}" = "true" ] && suites+=("Resources/Login:Resources-Login")
+          [ "${{ github.event.inputs.run_transfer }}" = "true" ] && suites+=("Resources/Transfer:Resources-Transfer")
+          [ "${{ github.event.inputs.run_billpay }}" = "true" ] && suites+=("Resources/BillPay:Resources-BillPay")
+          [ "${{ github.event.inputs.run_opennewaccount }}" = "true" ] && suites+=("Resources/OpenNewAccount:Resources-OpenNewAccount")
+          [ "${{ github.event.inputs.run_updateprofile }}" = "true" ] && suites+=("Resources/UpdateProfile:Resources-UpdateProfile")
+
+          # se usuário desmarcar tudo, por padrão roda nada (ou você pode escolher “rodar tudo”)
+          if [ "${#suites[@]}" -eq 0 ]; then
+            echo "matrix=[]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # gera JSON sem depender de jq
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import os, json
+          raw = os.environ["SUITES"].split("||")
+          out = []
+          for item in raw:
+            path, slug = item.split(":")
+            out.append({"path": path, "slug": slug})
+          print("matrix=" + json.dumps(out))
+          PY
+        env:
+          SUITES: ${{ join(fromJson('["dummy"]'), '') }}
+      - name: Export SUITES env for python
+        if: always()
+        shell: bash
+        run: |
+          # Recria SUITES corretamente (sem gambiarra do YAML)
+          suites=()
+          [ "${{ github.event.inputs.run_login }}" = "true" ] && suites+=("Resources/Login:Resources-Login")
+          [ "${{ github.event.inputs.run_transfer }}" = "true" ] && suites+=("Resources/Transfer:Resources-Transfer")
+          [ "${{ github.event.inputs.run_billpay }}" = "true" ] && suites+=("Resources/BillPay:Resources-BillPay")
+          [ "${{ github.event.inputs.run_opennewaccount }}" = "true" ] && suites+=("Resources/OpenNewAccount:Resources-OpenNewAccount")
+          [ "${{ github.event.inputs.run_updateprofile }}" = "true" ] && suites+=("Resources/UpdateProfile:Resources-UpdateProfile")
+          echo "SUITES=$(IFS='||'; echo "${suites[*]}")" >> $GITHUB_ENV
+
+      - name: Fix matrix output (override)
+        shell: bash
+        run: |
+          MODE="${{ github.event.inputs.mode }}"
+          if [ "$MODE" = "single" ]; then
+            echo 'matrix=[{"path":"Resources","slug":"Resources-All"}]' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -z "${SUITES:-}" ]; then
+            echo "matrix=[]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import os, json
+          raw = os.environ["SUITES"].split("||")
+          out = []
+          for item in raw:
+            if not item.strip():
+              continue
+            path, slug = item.split(":")
+            out.append({"path": path, "slug": slug})
+          print("matrix=" + json.dumps(out))
+          PY
+
+  robot:
+    needs: prepare
+    if: ${{ needs.prepare.outputs.matrix != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: ${{ fromJson(needs.prepare.outputs.matrix) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-linux-keyring.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Run Robot (headless)
+        shell: bash
+        run: |
+          set +e
+          OUT="${{ env.RESULTS_DIR }}/${{ matrix.suite.slug }}"
+          mkdir -p "$OUT"
+          robot -d "$OUT" -v HEADLESS:True ${{ needs.prepare.outputs.tag_args }} "${{ matrix.suite.path }}"
+          echo $? > "$OUT/robot.exitcode"
+          set -e
+
+      - name: Upload artifacts (per suite)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-results-${{ matrix.suite.slug }}
+          path: |
+            ${{ env.RESULTS_DIR }}/${{ matrix.suite.slug }}/**
+          retention-days: 14
+
+  publish-pages:
+    if: always()
+    needs: [robot]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: _artifacts
+
+      - name: Build Pages site (latest + runs/<run_id>)
+        shell: bash
+        run: |
+          set -e
+          RUN="${{ github.run_id }}"
+          mkdir -p site/latest site/runs/"$RUN"
+          touch site/.nojekyll
+
+          for d in _artifacts/*; do
+            [ -d "$d" ] || continue
+            bn="$(basename "$d")"
+            slug="${bn#robot-results-}"
+            mkdir -p "site/latest/$slug" "site/runs/$RUN/$slug"
+            cp -R "$d/"* "site/latest/$slug/" 2>/dev/null || true
+            cp -R "$d/"* "site/runs/$RUN/$slug/" 2>/dev/null || true
+          done
+
+          python - <<'PY'
+          import os, pathlib
+          site = pathlib.Path("site")
+          run_id = os.getenv("GITHUB_RUN_ID","")
+
+          def suite_links(folder: pathlib.Path, prefix: str):
+            items=[]
+            if folder.exists():
+              for p in sorted(folder.iterdir()):
+                if p.is_dir():
+                  slug=p.name
+                  items.append((slug,f"{prefix}/{slug}/log.html",f"{prefix}/{slug}/report.html"))
+            return items
+
+          latest_items = suite_links(site/"latest","./latest")
+          runs_root = site/"runs"
+          runs = sorted([p.name for p in runs_root.iterdir() if p.is_dir()], reverse=True) if runs_root.exists() else []
+
+          (site/"index.html").write_text(
+            "<!doctype html><html><head><meta charset='utf-8'><title>Robot Reports</title></head><body>"
+            "<h1>Robot Framework Reports</h1>"
+            "<p><b>Latest:</b> <a href='./latest/'>abrir</a></p>"
+            f"<p><b>This run:</b> <a href='./runs/{run_id}/'>abrir</a></p>"
+            "<p><b>Runs:</b> <a href='./runs/'>abrir histórico</a></p>"
+            "</body></html>", encoding="utf-8"
+          )
+
+          html=["<!doctype html><html><head><meta charset='utf-8'><title>Latest</title></head><body><h2>Latest</h2><ul>"]
+          for slug,log,rep in latest_items:
+            html.append(f"<li><b>{slug}</b> — <a href='{log}'>log</a> | <a href='{rep}'>report</a></li>")
+          html.append("</ul><p><a href='../'>voltar</a></p></body></html>")
+          (site/"latest"/"index.html").write_text("\n".join(html), encoding="utf-8")
+
+          html=["<!doctype html><html><head><meta charset='utf-8'><title>Runs</title></head><body><h2>Runs</h2><ul>"]
+          for r in runs[:50]:
+            html.append(f"<li><a href='./{r}/'>{r}</a></li>")
+          html.append("</ul><p><a href='../'>voltar</a></p></body></html>")
+          (site/"runs"/"index.html").write_text("\n".join(html), encoding="utf-8")
+
+          run_dir = site/"runs"/run_id
+          items = suite_links(run_dir,".")
+          html=["<!doctype html><html><head><meta charset='utf-8'><title>This Run</title></head><body>",
+                f"<h2>Run {run_id}</h2><ul>"]
+          for slug,log,rep in items:
+            html.append(f"<li><b>{slug}</b> — <a href='{log}'>log</a> | <a href='{rep}'>report</a></li>")
+          html.append("</ul><p><a href='../'>voltar</a></p></body></html>")
+          run_dir.mkdir(parents=True, exist_ok=True)
+          (run_dir/"index.html").write_text("\n".join(html), encoding="utf-8")
+          PY
+
+      - name: Publish to gh-pages (preserve history)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: site
+          keep_files: true
