@@ -11,96 +11,56 @@ on:
     inputs:
       mode:
         description: "Modo de execução"
-        required: true
-        default: "parallel"
         type: choice
-        options:
-          - single
-          - parallel
-      suite:
-        description: "Suite/pasta para rodar no modo single (ex: Resources ou Resources/Transfer)"
         required: true
-        default: "Resources"
+        default: parallel
+        options:
+          - parallel
+          - single
 
-  # Se quiser agendamento, descomente:
-  # schedule:
-  #   - cron: "0 3 * * *"
+      suite:
+        description: "Suite/pasta para rodar no modo single"
+        type: choice
+        required: true
+        default: Resources
+        options:
+          - Resources
+          - Resources/Login
+          - Resources/Transfer
+          - Resources/BillPay
+          - Resources/OpenNewAccount
+          - Resources/UpdateProfile
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "robot-pages"
-  cancel-in-progress: false
+  # (opcional) schedule:
+  #   - cron: "0 3 * * *"  # 03:00 UTC (~00:00 SP)
 
 jobs:
   # =========================
-  # 1) SINGLE (manual opcional)
-  # =========================
-  robot-single:
-    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.mode == 'single' }}
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Install Google Chrome
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget gnupg
-          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-linux-keyring.gpg
-          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
-
-      - name: Run Robot Tests (headless) - single
-        run: |
-          mkdir -p Results/single
-          TARGET="${{ github.event.inputs.suite || 'Resources' }}"
-          robot -d Results/single -v HEADLESS:True "$TARGET"
-
-      - name: Upload artifacts (single)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: robot-results-single
-          path: Results/single/**
-          retention-days: 14
-
-  # =========================
-  # 2) PARALLEL (matrix)
+  # AUTO: push/PR -> PARALLEL
   # =========================
   robot-parallel:
-    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'parallel' || github.event_name != 'workflow_dispatch' }}
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
       matrix:
+        suite:
+          - Resources/Login
+          - Resources/Transfer
+          - Resources/BillPay
+          - Resources/OpenNewAccount
+          - Resources/UpdateProfile
         include:
-          - id: login
-            suite: Resources/Login
-          - id: transfer
-            suite: Resources/Transfer
-          - id: billpay
-            suite: Resources/BillPay
-          - id: opennewaccount
-            suite: Resources/OpenNewAccount
-          - id: updateprofile
-            suite: Resources/UpdateProfile
+          - suite: Resources/Login
+            suite_id: Login
+          - suite: Resources/Transfer
+            suite_id: Transfer
+          - suite: Resources/BillPay
+            suite_id: BillPay
+          - suite: Resources/OpenNewAccount
+            suite_id: OpenNewAccount
+          - suite: Resources/UpdateProfile
+            suite_id: UpdateProfile
 
     steps:
       - name: Checkout
@@ -125,88 +85,68 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
 
-      - name: Run Robot (headless) - matrix
+      - name: Run Robot (parallel suite)
         run: |
-          mkdir -p "Results/${{ matrix.id }}"
-          robot -d "Results/${{ matrix.id }}" -v HEADLESS:True "${{ matrix.suite }}"
+          mkdir -p Results/${{ matrix.suite_id }}
+          robot -d Results/${{ matrix.suite_id }} -v HEADLESS:True "${{ matrix.suite }}"
 
       - name: Upload artifacts (per suite)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: robot-results-${{ matrix.id }}
-          path: Results/${{ matrix.id }}/**
+          # IMPORTANTÍSSIMO: sem "/" no nome do artifact
+          name: robot-results-${{ matrix.suite_id }}
+          path: Results/${{ matrix.suite_id }}/**
+          if-no-files-found: warn
           retention-days: 14
 
-  # =========================
-  # 3) PUBLISH TO GITHUB PAGES (sem zip)
-  # =========================
-  publish-pages:
-    needs: [robot-parallel]
-    if: always()
+  # =================================
+  # MANUAL: workflow_dispatch -> single/parallel
+  # =================================
+  robot-manual:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download all robot artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Build public site (index + folders)
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
         run: |
-          mkdir -p public
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-          # Copia cada artifact para uma pasta em public/
-          for d in artifacts/robot-results-*; do
-            name=$(basename "$d")                       # ex: robot-results-login
-            suite=${name#robot-results-}                # ex: login
-            mkdir -p "public/$suite"
-            cp -R "$d"/. "public/$suite"/
-          done
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-linux-keyring.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
 
-          # Cria um index.html com links
-          cat > public/index.html <<'EOF'
-          <!doctype html>
-          <html>
-          <head>
-            <meta charset="utf-8" />
-            <title>Robot Framework - Results</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 24px; }
-              a { display:block; margin: 8px 0; }
-              code { background: #eee; padding: 2px 6px; border-radius: 4px; }
-            </style>
-          </head>
-          <body>
-            <h1>Robot Framework - Results</h1>
-            <p>Abra os reports por suíte:</p>
-            <div id="links"></div>
+      - name: Run Robot (manual SINGLE)
+        if: inputs.mode == 'single'
+        run: |
+          mkdir -p Results
+          robot -d Results -v HEADLESS:True "${{ inputs.suite }}"
 
-            <script>
-              // Esta lista é preenchida no build via shell (abaixo)
-            </script>
-          </body>
-          </html>
-          EOF
+      - name: Run Robot (manual PARALLEL = tudo)
+        if: inputs.mode == 'parallel'
+        run: |
+          mkdir -p Results
+          robot -d Results -v HEADLESS:True Resources
 
-          # Injeta links no index
-          LINKS=""
-          for suite in $(ls -1 public | grep -v index.html); do
-            if [ -f "public/$suite/report.html" ]; then
-              LINKS="$LINKS<a href='./$suite/report.html'>${suite} - report.html</a>\n"
-            fi
-            if [ -f "public/$suite/log.html" ]; then
-              LINKS="$LINKS<a href='./$suite/log.html'>${suite} - log.html</a>\n"
-            fi
-          done
-
-          # Coloca links dentro do index.html (antes do </div>)
-          perl -0777 -i -pe "s#<div id=\"links\"></div>#<div id=\"links\">$LINKS</div>#s" public/index.html
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload artifacts (manual)
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          path: public
-
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+          name: robot-results-manual-${{ inputs.mode }}
+          path: Results/**
+          if-no-files-found: warn
+          retention-days: 14
