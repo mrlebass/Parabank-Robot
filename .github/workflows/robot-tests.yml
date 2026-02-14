@@ -1,4 +1,4 @@
-name: Web Regressive E2E
+name: Web Regression Testing (E2E)
 
 on:
   push:
