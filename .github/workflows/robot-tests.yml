@@ -18,23 +18,20 @@ on:
           - parallel
           - single
 
-      # ✅ Single: escolher 1 feature (dropdown)
       single_suite:
-        description: "Suite para rodar no modo single"
+        description: "Single: escolher 1 feature"
         type: choice
         required: true
-        default: Resources
+        default: Resources/Transfer
         options:
-          - Resources
           - Resources/Login
           - Resources/Transfer
           - Resources/BillPay
           - Resources/OpenNewAccount
           - Resources/UpdateProfile
 
-      # ✅ Parallel: escolher subset pronto (simula multi-select)
       parallel_subset:
-        description: "Subset no modo parallel (simula multi-select)"
+        description: "Parallel: subset pronto (simula multi-select)"
         type: choice
         required: true
         default: All
@@ -56,21 +53,88 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # =========================
-  # AUTO (push/pr): PARALLEL
-  # =========================
-  robot-parallel-auto:
-    if: ${{ github.event_name != 'workflow_dispatch' }}
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - id: set
+        shell: bash
+        run: |
+          set -e
+
+          # Lista base (auto paralelo)
+          ALL='[
+            {"path":"Resources/Login","slug":"Resources-Login"},
+            {"path":"Resources/Transfer","slug":"Resources-Transfer"},
+            {"path":"Resources/BillPay","slug":"Resources-BillPay"},
+            {"path":"Resources/OpenNewAccount","slug":"Resources-OpenNewAccount"},
+            {"path":"Resources/UpdateProfile","slug":"Resources-UpdateProfile"}
+          ]'
+
+          EVENT="${{ github.event_name }}"
+
+          if [ "$EVENT" != "workflow_dispatch" ]; then
+            # push/pr => sempre paralelo com tudo
+            MATRIX="$ALL"
+          else
+            MODE="${{ inputs.mode }}"
+            if [ "$MODE" = "single" ]; then
+              SUITE="${{ inputs.single_suite }}"
+              SLUG="${SUITE//\//-}"
+              MATRIX='[{"path":"'"$SUITE"'","slug":"'"$SLUG"'"}]'
+            else
+              SUB="${{ inputs.parallel_subset }}"
+              case "$SUB" in
+                All)
+                  MATRIX="$ALL"
+                  ;;
+                Login+Transfer)
+                  MATRIX='[
+                    {"path":"Resources/Login","slug":"Resources-Login"},
+                    {"path":"Resources/Transfer","slug":"Resources-Transfer"}
+                  ]'
+                  ;;
+                BillPay+OpenNewAccount)
+                  MATRIX='[
+                    {"path":"Resources/BillPay","slug":"Resources-BillPay"},
+                    {"path":"Resources/OpenNewAccount","slug":"Resources-OpenNewAccount"}
+                  ]'
+                  ;;
+                Transfer+UpdateProfile)
+                  MATRIX='[
+                    {"path":"Resources/Transfer","slug":"Resources-Transfer"},
+                    {"path":"Resources/UpdateProfile","slug":"Resources-UpdateProfile"}
+                  ]'
+                  ;;
+                Login+BillPay)
+                  MATRIX='[
+                    {"path":"Resources/Login","slug":"Resources-Login"},
+                    {"path":"Resources/BillPay","slug":"Resources-BillPay"}
+                  ]'
+                  ;;
+                OpenNewAccount+Transfer)
+                  MATRIX='[
+                    {"path":"Resources/OpenNewAccount","slug":"Resources-OpenNewAccount"},
+                    {"path":"Resources/Transfer","slug":"Resources-Transfer"}
+                  ]'
+                  ;;
+                *)
+                  MATRIX="$ALL"
+                  ;;
+              esac
+            fi
+          fi
+
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+
+  robot:
+    needs: prepare
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        suite:
-          - Resources/Login
-          - Resources/Transfer
-          - Resources/BillPay
-          - Resources/OpenNewAccount
-          - Resources/UpdateProfile
+        suite: ${{ fromJSON(needs.prepare.outputs.matrix) }}
 
     steps:
       - name: Checkout
@@ -95,98 +159,35 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
 
-      # ✅ roda e CAPTURA exit code sem matar o job
-      - name: Run Robot (headless) - auto parallel
+      # Roda SEM matar o job imediatamente, pra sempre gerar logs
+      - name: Run Robot (headless)
         shell: bash
         run: |
           set +e
-          SAFE_SUITE="${{ matrix.suite }}"
-          OUT="Results/${SAFE_SUITE//\//-}"
+          OUT="Results/${{ matrix.suite.slug }}"
           mkdir -p "$OUT"
-          robot -d "$OUT" -v HEADLESS:True "$SAFE_SUITE"
-          echo "ROBOT_EXIT_${SAFE_SUITE//\//_}=$?" >> $GITHUB_ENV
+          robot -d "$OUT" -v HEADLESS:True "${{ matrix.suite.path }}"
+          echo "ROBOT_EXIT_CODE=$?" >> $GITHUB_ENV
           set -e
 
       - name: Upload artifacts (per suite)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          # ✅ sem "/" no nome do artifact
-          name: robot-results-${{ matrix.suite && join(split(matrix.suite, '/'), '-') }}
+          # ✅ sem "/" -> sem erro NTFS
+          name: robot-results-${{ matrix.suite.slug }}
           path: |
-            Results/**
+            Results/${{ matrix.suite.slug }}/**
           retention-days: 14
 
-  # ==========================================
-  # MANUAL: single OU parallel com subset pronto
-  # ==========================================
-  robot-manual:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        suite: ${{ fromJSON(
-          github.event.inputs.mode == 'single' && format('["{0}"]', github.event.inputs.single_suite)
-          || github.event.inputs.parallel_subset == 'All' && '["Resources/Login","Resources/Transfer","Resources/BillPay","Resources/OpenNewAccount","Resources/UpdateProfile"]'
-          || github.event.inputs.parallel_subset == 'Login+Transfer' && '["Resources/Login","Resources/Transfer"]'
-          || github.event.inputs.parallel_subset == 'BillPay+OpenNewAccount' && '["Resources/BillPay","Resources/OpenNewAccount"]'
-          || github.event.inputs.parallel_subset == 'Transfer+UpdateProfile' && '["Resources/Transfer","Resources/UpdateProfile"]'
-          || github.event.inputs.parallel_subset == 'Login+BillPay' && '["Resources/Login","Resources/BillPay"]'
-          || github.event.inputs.parallel_subset == 'OpenNewAccount+Transfer' && '["Resources/OpenNewAccount","Resources/Transfer"]'
-          || '["Resources"]'
-        ) }}
+      # Se quiser falhar o workflow no final quando algum suite falha:
+      - name: Fail if robot failed
+        if: ${{ env.ROBOT_EXIT_CODE != '0' }}
+        run: exit 1
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Install Google Chrome
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget gnupg
-          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-linux-keyring.gpg
-          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
-
-      - name: Run Robot (headless) - manual
-        shell: bash
-        run: |
-          set +e
-          SAFE_SUITE="${{ matrix.suite }}"
-          OUT="Results/${SAFE_SUITE//\//-}"
-          mkdir -p "$OUT"
-          robot -d "$OUT" -v HEADLESS:True "$SAFE_SUITE"
-          echo "ROBOT_EXIT_${SAFE_SUITE//\//_}=$?" >> $GITHUB_ENV
-          set -e
-
-      - name: Upload artifacts (per suite)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: robot-results-${{ join(split(matrix.suite, '/'), '-') }}
-          path: |
-            Results/**
-          retention-days: 14
-
-  # =========================
-  # PAGES: publica SEMPRE
-  # =========================
   publish-pages:
-    # ✅ sempre tenta publicar, mesmo se testes falharem
     if: always()
-    needs: [robot-parallel-auto, robot-manual]
+    needs: robot
     runs-on: ubuntu-latest
 
     steps:
@@ -198,23 +199,28 @@ jobs:
         with:
           path: _artifacts
 
-      - name: Build Pages site (latest)
+      - name: Build Pages site
         shell: bash
         run: |
+          set -e
           mkdir -p site/latest
-          # junta tudo (cada artifact tem uma pasta própria)
-          find _artifacts -type f -name "log.html" -o -name "report.html" -o -name "output.xml" -o -name "*.png" | wc -l || true
-          cp -R _artifacts/*/* site/latest/ 2>/dev/null || true
+          cp -R _artifacts/* site/latest/ 2>/dev/null || true
 
-          # cria um index simples apontando pro log/report
           cat > site/index.html <<'HTML'
           <!doctype html>
           <html>
-            <head><meta charset="utf-8"><title>Robot Reports</title></head>
+            <head>
+              <meta charset="utf-8">
+              <title>Robot Reports</title>
+              <style>
+                body{font-family:Arial, sans-serif; padding:20px;}
+                a{display:block; margin:8px 0;}
+              </style>
+            </head>
             <body>
               <h2>Robot Framework - Latest</h2>
-              <p><a href="latest/log.html">Open log.html</a></p>
-              <p><a href="latest/report.html">Open report.html</a></p>
+              <p>Abra os reports abaixo (cada suite tem sua própria pasta em <b>latest/</b>):</p>
+              <a href="latest/">📁 Abrir pasta latest/</a>
             </body>
           </html>
           HTML
