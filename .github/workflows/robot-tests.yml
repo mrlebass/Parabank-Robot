@@ -13,49 +13,50 @@ on:
         type: choice
         required: true
         default: parallel
-        options: [parallel, single]
+        options:
+          - parallel
+          - single
 
-      # ===== "Selection buttons" (checkbox simulation) =====
+      # ✅ seleção livre (checkbox) — funciona como “selection button”
       run_login:
         description: "Rodar feature Login?"
         type: boolean
         required: true
         default: true
-
       run_transfer:
         description: "Rodar feature Transfer?"
         type: boolean
         required: true
         default: true
-
       run_billpay:
         description: "Rodar feature BillPay?"
         type: boolean
         required: true
         default: true
-
       run_opennewaccount:
         description: "Rodar feature OpenNewAccount?"
         type: boolean
         required: true
         default: true
-
       run_updateprofile:
         description: "Rodar feature UpdateProfile?"
         type: boolean
         required: true
         default: true
 
-      # ===== Tags =====
       tag_filter:
         description: "Filtro por tag"
         type: choice
         required: true
         default: all
-        options: [all, Positive, Negative, custom]
+        options:
+          - all
+          - positive
+          - negative
+          - custom
 
       custom_tags:
-        description: "Se tag_filter=custom, informe tags (ex: Positive,Smoke) separadas por vírgula"
+        description: "Se tag_filter=custom: informe tags separadas por vírgula (ex: Positive,Smoke)"
         required: false
         default: ""
 
@@ -68,20 +69,18 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
-env:
-  PYTHON_VERSION: "3.11"
-
 jobs:
-  # ==========================================================
-  # PREPARE: monta matrix/features e args de tag de forma segura
-  # ==========================================================
+  # =========================
+  # PREPARE: decide suites + tags + mode
+  # (sempre roda e gera outputs válidos)
+  # =========================
   prepare:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.build.outputs.matrix }}
-      mode: ${{ steps.build.outputs.mode }}
+      run_mode: ${{ steps.build.outputs.run_mode }}
+      matrix_json: ${{ steps.build.outputs.matrix_json }}
+      single_args: ${{ steps.build.outputs.single_args }}
       tag_args: ${{ steps.build.outputs.tag_args }}
-
     steps:
       - name: Build matrix + tag args
         id: build
@@ -89,151 +88,104 @@ jobs:
         run: |
           set -e
 
-          # ----- mode -----
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            MODE="${{ github.event.inputs.mode }}"
-          else
-            MODE="parallel"   # push/pr sempre parallel
-          fi
+          python - <<'PY' > prepared.txt
+          import os, json
 
-          # ----- feature toggles -----
-          # push/pr => tudo true
-          if [[ "${{ github.event_name }}" != "workflow_dispatch" ]]; then
-            RUN_LOGIN=true
-            RUN_TRANSFER=true
-            RUN_BILLPAY=true
-            RUN_OPENNEWACCOUNT=true
-            RUN_UPDATEPROFILE=true
-          else
-            RUN_LOGIN="${{ github.event.inputs.run_login }}"
-            RUN_TRANSFER="${{ github.event.inputs.run_transfer }}"
-            RUN_BILLPAY="${{ github.event.inputs.run_billpay }}"
-            RUN_OPENNEWACCOUNT="${{ github.event.inputs.run_opennewaccount }}"
-            RUN_UPDATEPROFILE="${{ github.event.inputs.run_updateprofile }}"
-          fi
+          event = os.environ.get("GITHUB_EVENT_NAME", "")
+          # default para push/pr
+          run_mode = "parallel"
+          selected = {
+            "Resources/Login": True,
+            "Resources/Transfer": True,
+            "Resources/BillPay": True,
+            "Resources/OpenNewAccount": True,
+            "Resources/UpdateProfile": True,
+          }
 
-          # ----- tags -----
-          TAG_FILTER="all"
-          CUSTOM_TAGS=""
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            TAG_FILTER="${{ github.event.inputs.tag_filter }}"
-            CUSTOM_TAGS="${{ github.event.inputs.custom_tags }}"
-          fi
+          # workflow_dispatch: usa inputs (checkbox)
+          if event == "workflow_dispatch":
+            run_mode = os.environ.get("INPUT_MODE", "parallel")
+            selected = {
+              "Resources/Login": os.environ.get("INPUT_RUN_LOGIN", "true") == "true",
+              "Resources/Transfer": os.environ.get("INPUT_RUN_TRANSFER", "true") == "true",
+              "Resources/BillPay": os.environ.get("INPUT_RUN_BILLPAY", "true") == "true",
+              "Resources/OpenNewAccount": os.environ.get("INPUT_RUN_OPENNEWACCOUNT", "true") == "true",
+              "Resources/UpdateProfile": os.environ.get("INPUT_RUN_UPDATEPROFILE", "true") == "true",
+            }
 
-          TAG_ARGS=""
-          if [[ "$TAG_FILTER" == "Positive" ]]; then
-            TAG_ARGS="-i Positive"
-          elif [[ "$TAG_FILTER" == "Negative" ]]; then
-            TAG_ARGS="-i Negative"
-          elif [[ "$TAG_FILTER" == "custom" ]]; then
-            # converte "A,B,C" => "-i A -i B -i C"
-            # se vier vazio, não filtra
-            if [[ -n "${CUSTOM_TAGS// /}" ]]; then
-              IFS=',' read -ra ARR <<< "$CUSTOM_TAGS"
-              for t in "${ARR[@]}"; do
-                t="$(echo "$t" | xargs)"
-                [[ -n "$t" ]] && TAG_ARGS="$TAG_ARGS -i $t"
-              done
-            fi
-          fi
+          suites = [p for p, ok in selected.items() if ok]
 
-          # ----- monta lista de suites selecionadas -----
-          SUITES=()
-          [[ "$RUN_LOGIN" == "true" ]] && SUITES+=("Resources/Login")
-          [[ "$RUN_TRANSFER" == "true" ]] && SUITES+=("Resources/Transfer")
-          [[ "$RUN_BILLPAY" == "true" ]] && SUITES+=("Resources/BillPay")
-          [[ "$RUN_OPENNEWACCOUNT" == "true" ]] && SUITES+=("Resources/OpenNewAccount")
-          [[ "$RUN_UPDATEPROFILE" == "true" ]] && SUITES+=("Resources/UpdateProfile")
+          # se o usuário desmarcar tudo, evita quebrar:
+          if not suites:
+            suites = ["Resources/Login"]
 
-          # se o cara desmarcar tudo no manual, roda tudo (evita pipeline “vazia”)
-          if [[ ${#SUITES[@]} -eq 0 ]]; then
-            SUITES=("Resources/Login" "Resources/Transfer" "Resources/BillPay" "Resources/OpenNewAccount" "Resources/UpdateProfile")
-          fi
+          # tags
+          tag_filter = os.environ.get("INPUT_TAG_FILTER", "all")
+          custom = os.environ.get("INPUT_CUSTOM_TAGS", "").strip()
 
-          # ----- matrix JSON seguro via python (evita erro de format do output) -----
-          python - << 'PY'
-          import json, os
-          suites = os.environ["SUITES"].split("|")
-          include = []
+          # Robot: -i TAG (include)
+          tag_args = ""
+          if event == "workflow_dispatch":
+            if tag_filter == "positive":
+              tag_args = "-i Positive"
+            elif tag_filter == "negative":
+              tag_args = "-i Negative"
+            elif tag_filter == "custom" and custom:
+              tags = [t.strip() for t in custom.split(",") if t.strip()]
+              tag_args = " ".join([f"-i {t}" for t in tags])
+
+          # matrix (parallel) com slug seguro
+          matrix = []
           for s in suites:
-            s = s.strip()
             slug = s.replace("/", "-")
-            include.append({"path": s, "slug": slug})
-          print(json.dumps({"include": include}))
+            matrix.append({"path": s, "slug": slug})
+
+          # single args: Robot aceita múltiplas pastas no fim do comando
+          single_args = " ".join(suites)
+
+          # imprime num JSON único para o bash exportar
+          payload = {
+            "run_mode": run_mode,
+            "matrix_json": json.dumps({"include": matrix}),
+            "single_args": single_args,
+            "tag_args": tag_args
+          }
+          print(json.dumps(payload))
           PY
 
-        env:
-          SUITES: >-
-            ${{ (
-              (github.event_name != 'workflow_dispatch' && 'Resources/Login|Resources/Transfer|Resources/BillPay|Resources/OpenNewAccount|Resources/UpdateProfile')
-              || (
-                (github.event.inputs.run_login == 'true' && 'Resources/Login|' || '') 
-                && ''
-              )
-            ) }}
+          cat prepared.txt
 
-      - name: Export outputs (matrix/mode/tag_args)
-        id: export
-        shell: bash
-        run: |
-          set -e
+          # export outputs com heredoc (forma correta)
+          RUN_MODE=$(cat prepared.txt | python -c "import sys,json; print(json.load(sys.stdin)['run_mode'])")
+          MATRIX=$(cat prepared.txt | python -c "import sys,json; print(json.load(sys.stdin)['matrix_json'])")
+          SINGLE_ARGS=$(cat prepared.txt | python -c "import sys,json; print(json.load(sys.stdin)['single_args'])")
+          TAG_ARGS=$(cat prepared.txt | python -c "import sys,json; print(json.load(sys.stdin)['tag_args'])")
 
-          # Rebuild suites string again (mais simples/garantido) no bash:
-          if [[ "${{ github.event_name }}" != "workflow_dispatch" ]]; then
-            SUITES=("Resources/Login" "Resources/Transfer" "Resources/BillPay" "Resources/OpenNewAccount" "Resources/UpdateProfile")
-            MODE="parallel"
-            TAG_ARGS=""
-          else
-            MODE="${{ github.event.inputs.mode }}"
-            TAG_FILTER="${{ github.event.inputs.tag_filter }}"
-            CUSTOM_TAGS="${{ github.event.inputs.custom_tags }}"
+          {
+            echo "run_mode=$RUN_MODE"
+            echo "matrix_json<<EOF"
+            echo "$MATRIX"
+            echo "EOF"
+            echo "single_args<<EOF"
+            echo "$SINGLE_ARGS"
+            echo "EOF"
+            echo "tag_args<<EOF"
+            echo "$TAG_ARGS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
-            TAG_ARGS=""
-            if [[ "$TAG_FILTER" == "Positive" ]]; then
-              TAG_ARGS="-i Positive"
-            elif [[ "$TAG_FILTER" == "Negative" ]]; then
-              TAG_ARGS="-i Negative"
-            elif [[ "$TAG_FILTER" == "custom" ]]; then
-              if [[ -n "${CUSTOM_TAGS// /}" ]]; then
-                IFS=',' read -ra ARR <<< "$CUSTOM_TAGS"
-                for t in "${ARR[@]}"; do
-                  t="$(echo "$t" | xargs)"
-                  [[ -n "$t" ]] && TAG_ARGS="$TAG_ARGS -i $t"
-                done
-              fi
-            fi
-
-            SUITES=()
-            [[ "${{ github.event.inputs.run_login }}" == "true" ]] && SUITES+=("Resources/Login")
-            [[ "${{ github.event.inputs.run_transfer }}" == "true" ]] && SUITES+=("Resources/Transfer")
-            [[ "${{ github.event.inputs.run_billpay }}" == "true" ]] && SUITES+=("Resources/BillPay")
-            [[ "${{ github.event.inputs.run_opennewaccount }}" == "true" ]] && SUITES+=("Resources/OpenNewAccount")
-            [[ "${{ github.event.inputs.run_updateprofile }}" == "true" ]] && SUITES+=("Resources/UpdateProfile")
-            [[ ${#SUITES[@]} -eq 0 ]] && SUITES=("Resources/Login" "Resources/Transfer" "Resources/BillPay" "Resources/OpenNewAccount" "Resources/UpdateProfile")
-          fi
-
-          MATRIX=$(python - << PY
-          import json
-          suites = ${SUITES[@]+"[" + ",".join(['"%s"'%s for s in SUITES]) + "]"}
-          include=[]
-          for s in suites:
-            include.append({"path": s, "slug": s.replace("/", "-")})
-          print(json.dumps({"include": include}))
-          PY)
-
-          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
-          echo "mode=$MODE" >> $GITHUB_OUTPUT
-          echo "tag_args=$TAG_ARGS" >> $GITHUB_OUTPUT
-
-  # ==========================================================
-  # ROBOT: parallel (matrix) OU single (um job só)
-  # ==========================================================
-  robot:
-    needs: prepare
+  # =========================
+  # PARALLEL (auto e manual): roda cada feature em um job (matrix)
+  # push/pr: sempre parallel ALL
+  # manual: parallel com checkboxes
+  # =========================
+  robot-parallel:
+    needs: [prepare]
+    if: ${{ needs.prepare.outputs.run_mode == 'parallel' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix: ${{ needs.prepare.outputs.mode == 'parallel' && fromJSON(needs.prepare.outputs.matrix) || fromJSON('{"include":[{"path":"Resources","slug":"single-all"}]}') }}
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix_json) }}
 
     steps:
       - name: Checkout
@@ -242,7 +194,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
@@ -258,23 +210,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
 
-      - name: Run Robot (headless)
+      - name: Run Robot (headless) - parallel
         shell: bash
+        env:
+          TAG_ARGS: ${{ needs.prepare.outputs.tag_args }}
         run: |
           set +e
-          SUITE="${{ matrix.path }}"
-          SLUG="${{ matrix.slug }}"
-          OUT="Results/${SLUG}"
+          OUT="Results/${{ matrix.slug }}"
           mkdir -p "$OUT"
 
-          # Se mode=single, roda Resources, mas ainda pode filtrar por tags
-          TAG_ARGS="${{ needs.prepare.outputs.tag_args }}"
+          echo "Running suite: ${{ matrix.path }}"
+          echo "TAG_ARGS: $TAG_ARGS"
 
-          echo "Running: robot -d $OUT -v HEADLESS:True $TAG_ARGS $SUITE"
-          robot -d "$OUT" -v HEADLESS:True $TAG_ARGS "$SUITE"
-          EXIT=$?
-          echo "robot_exit=$EXIT" >> $GITHUB_OUTPUT
-          exit $EXIT
+          # shellcheck disable=SC2086
+          robot -d "$OUT" -v HEADLESS:True $TAG_ARGS "${{ matrix.path }}"
+          exit_code=$?
+          echo "robot_exit_code=$exit_code" >> $GITHUB_OUTPUT
+          set -e
+          exit $exit_code
 
       - name: Upload artifacts (per suite)
         if: always()
@@ -283,66 +236,126 @@ jobs:
           name: robot-results-${{ matrix.slug }}
           path: |
             Results/${{ matrix.slug }}/**
+          if-no-files-found: warn
           retention-days: 14
 
-  # ==========================================================
-  # PAGES: publica SEMPRE, mesmo com falha
-  # ==========================================================
-  publish-pages:
-    if: always()
-    needs: [robot]
+  # =========================
+  # SINGLE (manual): 1 job só, mas roda as features selecionadas em sequência
+  # =========================
+  robot-single:
+    needs: [prepare]
+    if: ${{ github.event_name == 'workflow_dispatch' && needs.prepare.outputs.run_mode == 'single' }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download all artifacts
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-linux-keyring.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Run Robot (headless) - single
+        shell: bash
+        env:
+          TAG_ARGS: ${{ needs.prepare.outputs.tag_args }}
+          SUITES: ${{ needs.prepare.outputs.single_args }}
+        run: |
+          set +e
+          OUT="Results/single"
+          mkdir -p "$OUT"
+
+          echo "Running suites (single job): $SUITES"
+          echo "TAG_ARGS: $TAG_ARGS"
+
+          # shellcheck disable=SC2086
+          robot -d "$OUT" -v HEADLESS:True $TAG_ARGS $SUITES
+          exit_code=$?
+          set -e
+          exit $exit_code
+
+      - name: Upload artifacts (single)
         if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-results-single
+          path: |
+            Results/single/**
+          if-no-files-found: warn
+          retention-days: 14
+
+  # =========================
+  # PAGES: publica SEMPRE (mesmo com falhas)
+  # Observação: nesse modelo, o site é "latest" (sobrescreve a cada deploy).
+  # =========================
+  publish-pages:
+    needs: [prepare, robot-parallel, robot-single]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: _artifacts
 
-      - name: Build Pages site
-        if: always()
+      - name: Build Pages site (latest)
         shell: bash
         run: |
-          set -e
-          RUN_ID="${{ github.run_id }}"
-          mkdir -p site/runs/"$RUN_ID"
-
-          # Copia tudo de todos os suites para esse run
-          cp -R _artifacts/*/* site/runs/"$RUN_ID"/ 2>/dev/null || true
-
-          # Atualiza "latest" para apontar pro run atual
-          rm -rf site/latest || true
           mkdir -p site/latest
-          cp -R site/runs/"$RUN_ID"/* site/latest/ 2>/dev/null || true
 
-          # Index com links
-          cat > site/index.html <<HTML
+          # Mantém cada artifact em sua própria pasta (evita colisão de log.html/report.html)
+          cp -R _artifacts/* site/latest/ 2>/dev/null || true
+
+          # Index
+          cat > site/index.html <<'HTML'
           <!doctype html>
           <html>
-            <head><meta charset="utf-8"><title>Robot Reports</title></head>
+            <head>
+              <meta charset="utf-8">
+              <title>Robot Reports</title>
+              <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                code { background: #eee; padding: 2px 6px; border-radius: 6px; }
+              </style>
+            </head>
             <body>
-              <h2>Robot Framework Reports</h2>
-              <p><b>Latest:</b> <a href="latest/log.html">log.html</a> | <a href="latest/report.html">report.html</a></p>
-              <p><b>This run:</b> <a href="runs/$RUN_ID/log.html">log.html</a> | <a href="runs/$RUN_ID/report.html">report.html</a></p>
-              <p><b>Runs:</b> pasta /runs/&lt;run_id&gt;/</p>
+              <h2>Robot Framework - Latest Run</h2>
+              <p>Abra um artifact e entre em <code>log.html</code> / <code>report.html</code> dentro dele.</p>
+              <p><b>Pastas:</b></p>
+              <ul id="list"></ul>
+              <script>
+                // lista pastas por “convenção”: link direto exige saber o nome da pasta
+                // (GitHub Pages não deixa listar diretório nativamente sem gerar index por pasta)
+                document.getElementById('list').innerHTML =
+                  '<li>Abra: <a href="latest/">latest/</a> (veja as pastas)</li>';
+              </script>
             </body>
           </html>
           HTML
 
       - name: Configure Pages
-        if: always()
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
-        if: always()
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
       - name: Deploy to GitHub Pages
-        if: always()
         uses: actions/deploy-pages@v4
