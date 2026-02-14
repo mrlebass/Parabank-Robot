@@ -18,20 +18,23 @@ on:
           - parallel
           - single
 
+      # Single: escolher 1 feature (dropdown)
       single_suite:
-        description: "Single: escolher 1 feature"
+        description: "Suite para rodar no modo single"
         type: choice
         required: true
-        default: Resources/Transfer
+        default: Resources
         options:
+          - Resources
           - Resources/Login
           - Resources/Transfer
           - Resources/BillPay
           - Resources/OpenNewAccount
           - Resources/UpdateProfile
 
+      # Parallel: escolher subset pronto (simula multi-select)
       parallel_subset:
-        description: "Parallel: subset pronto (simula multi-select)"
+        description: "Subset no modo parallel (simula multi-select)"
         type: choice
         required: true
         default: All
@@ -53,81 +56,63 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # =========================
+  # PREPARE: monta a matrix
+  # =========================
   prepare:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set.outputs.matrix }}
+      matrix: ${{ steps.mk.outputs.matrix }}
     steps:
-      - id: set
+      - name: Build matrix JSON
+        id: mk
         shell: bash
         run: |
-          set -e
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
 
-          # Lista base (auto paralelo)
-          ALL='[
-            {"path":"Resources/Login","slug":"Resources-Login"},
-            {"path":"Resources/Transfer","slug":"Resources-Transfer"},
-            {"path":"Resources/BillPay","slug":"Resources-BillPay"},
-            {"path":"Resources/OpenNewAccount","slug":"Resources-OpenNewAccount"},
-            {"path":"Resources/UpdateProfile","slug":"Resources-UpdateProfile"}
-          ]'
+          event = os.environ.get("GITHUB_EVENT_NAME", "")
+          mode  = os.environ.get("INPUT_MODE", "")
+          single_suite = os.environ.get("INPUT_SINGLE_SUITE", "")
+          subset = os.environ.get("INPUT_PARALLEL_SUBSET", "")
 
-          EVENT="${{ github.event_name }}"
+          all_suites = [
+            "Resources/Login",
+            "Resources/Transfer",
+            "Resources/BillPay",
+            "Resources/OpenNewAccount",
+            "Resources/UpdateProfile",
+          ]
 
-          if [ "$EVENT" != "workflow_dispatch" ]; then
-            # push/pr => sempre paralelo com tudo
-            MATRIX="$ALL"
-          else
-            MODE="${{ inputs.mode }}"
-            if [ "$MODE" = "single" ]; then
-              SUITE="${{ inputs.single_suite }}"
-              SLUG="${SUITE//\//-}"
-              MATRIX='[{"path":"'"$SUITE"'","slug":"'"$SLUG"'"}]'
-            else
-              SUB="${{ inputs.parallel_subset }}"
-              case "$SUB" in
-                All)
-                  MATRIX="$ALL"
-                  ;;
-                Login+Transfer)
-                  MATRIX='[
-                    {"path":"Resources/Login","slug":"Resources-Login"},
-                    {"path":"Resources/Transfer","slug":"Resources-Transfer"}
-                  ]'
-                  ;;
-                BillPay+OpenNewAccount)
-                  MATRIX='[
-                    {"path":"Resources/BillPay","slug":"Resources-BillPay"},
-                    {"path":"Resources/OpenNewAccount","slug":"Resources-OpenNewAccount"}
-                  ]'
-                  ;;
-                Transfer+UpdateProfile)
-                  MATRIX='[
-                    {"path":"Resources/Transfer","slug":"Resources-Transfer"},
-                    {"path":"Resources/UpdateProfile","slug":"Resources-UpdateProfile"}
-                  ]'
-                  ;;
-                Login+BillPay)
-                  MATRIX='[
-                    {"path":"Resources/Login","slug":"Resources-Login"},
-                    {"path":"Resources/BillPay","slug":"Resources-BillPay"}
-                  ]'
-                  ;;
-                OpenNewAccount+Transfer)
-                  MATRIX='[
-                    {"path":"Resources/OpenNewAccount","slug":"Resources-OpenNewAccount"},
-                    {"path":"Resources/Transfer","slug":"Resources-Transfer"}
-                  ]'
-                  ;;
-                *)
-                  MATRIX="$ALL"
-                  ;;
-              esac
-            fi
-          fi
+          subsets = {
+            "All": all_suites,
+            "Login+Transfer": ["Resources/Login","Resources/Transfer"],
+            "BillPay+OpenNewAccount": ["Resources/BillPay","Resources/OpenNewAccount"],
+            "Transfer+UpdateProfile": ["Resources/Transfer","Resources/UpdateProfile"],
+            "Login+BillPay": ["Resources/Login","Resources/BillPay"],
+            "OpenNewAccount+Transfer": ["Resources/OpenNewAccount","Resources/Transfer"],
+          }
 
-          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          # Push/PR => sempre paralelo (todas)
+          if event in ("push","pull_request"):
+            suites = all_suites
+          else:
+            # workflow_dispatch
+            if mode == "single":
+              suites = [single_suite] if single_suite else ["Resources"]
+            else:
+              suites = subsets.get(subset, all_suites)
 
+          # monta objetos com slug (sem /)
+          matrix = [{"path": s, "slug": s.replace("/","-")} for s in suites]
+
+          # escreve no formato correto do GitHub Output
+          print("matrix=" + json.dumps(matrix))
+          PY
+
+  # =========================
+  # ROBOT: roda em paralelo (matrix)
+  # =========================
   robot:
     needs: prepare
     runs-on: ubuntu-latest
@@ -159,79 +144,79 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
 
-      # Roda SEM matar o job imediatamente, pra sempre gerar logs
       - name: Run Robot (headless)
-        shell: bash
         run: |
-          set +e
           OUT="Results/${{ matrix.suite.slug }}"
           mkdir -p "$OUT"
           robot -d "$OUT" -v HEADLESS:True "${{ matrix.suite.path }}"
-          echo "ROBOT_EXIT_CODE=$?" >> $GITHUB_ENV
-          set -e
 
       - name: Upload artifacts (per suite)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          # ✅ sem "/" -> sem erro NTFS
           name: robot-results-${{ matrix.suite.slug }}
           path: |
             Results/${{ matrix.suite.slug }}/**
           retention-days: 14
 
-      # Se quiser falhar o workflow no final quando algum suite falha:
-      - name: Fail if robot failed
-        if: ${{ env.ROBOT_EXIT_CODE != '0' }}
-        run: exit 1
-
+  # =========================
+  # PAGES: publica SEMPRE
+  # =========================
   publish-pages:
     if: always()
     needs: robot
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Download all artifacts
+        if: always()
         uses: actions/download-artifact@v4
         with:
           path: _artifacts
 
-      - name: Build Pages site
+      - name: Build Pages site (latest + history)
+        if: always()
         shell: bash
         run: |
-          set -e
           mkdir -p site/latest
-          cp -R _artifacts/* site/latest/ 2>/dev/null || true
+          mkdir -p site/runs/${{ github.run_id }}
 
+          # Copia tudo para "latest" (sobrescreve)
+          cp -R _artifacts/*/* site/latest/ 2>/dev/null || true
+
+          # Copia tudo para um diretório por run (histórico, não sobrescreve)
+          cp -R _artifacts/*/* site/runs/${{ github.run_id }}/ 2>/dev/null || true
+
+          # index
           cat > site/index.html <<'HTML'
           <!doctype html>
           <html>
-            <head>
-              <meta charset="utf-8">
-              <title>Robot Reports</title>
-              <style>
-                body{font-family:Arial, sans-serif; padding:20px;}
-                a{display:block; margin:8px 0;}
-              </style>
-            </head>
+            <head><meta charset="utf-8"><title>Robot Reports</title></head>
             <body>
-              <h2>Robot Framework - Latest</h2>
-              <p>Abra os reports abaixo (cada suite tem sua própria pasta em <b>latest/</b>):</p>
-              <a href="latest/">📁 Abrir pasta latest/</a>
+              <h2>Robot Framework - Reports</h2>
+
+              <h3>Latest</h3>
+              <ul>
+                <li><a href="latest/log.html">log.html</a></li>
+                <li><a href="latest/report.html">report.html</a></li>
+              </ul>
+
+              <h3>History</h3>
+              <p>Run atual: <a href="runs/${{ github.run_id }}/log.html">log.html</a> | <a href="runs/${{ github.run_id }}/report.html">report.html</a></p>
             </body>
           </html>
           HTML
 
       - name: Configure Pages
+        if: always()
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
+        if: always()
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
       - name: Deploy to GitHub Pages
+        if: always()
         uses: actions/deploy-pages@v4
