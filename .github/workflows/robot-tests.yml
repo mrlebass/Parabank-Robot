@@ -3,7 +3,6 @@ name: Web Regressive E2E
 on:
   push:
     branches: ["main"]
-
   pull_request:
     branches: ["main"]
 
@@ -14,37 +13,51 @@ on:
         type: choice
         required: true
         default: parallel
-        options:
-          - parallel
-          - single
+        options: [parallel, single]
 
-      # Single: escolher 1 feature (dropdown)
-      single_suite:
-        description: "Suite para rodar no modo single"
+      # ===== "Selection buttons" (checkbox simulation) =====
+      run_login:
+        description: "Rodar feature Login?"
+        type: boolean
+        required: true
+        default: true
+
+      run_transfer:
+        description: "Rodar feature Transfer?"
+        type: boolean
+        required: true
+        default: true
+
+      run_billpay:
+        description: "Rodar feature BillPay?"
+        type: boolean
+        required: true
+        default: true
+
+      run_opennewaccount:
+        description: "Rodar feature OpenNewAccount?"
+        type: boolean
+        required: true
+        default: true
+
+      run_updateprofile:
+        description: "Rodar feature UpdateProfile?"
+        type: boolean
+        required: true
+        default: true
+
+      # ===== Tags =====
+      tag_filter:
+        description: "Filtro por tag"
         type: choice
         required: true
-        default: Resources
-        options:
-          - Resources
-          - Resources/Login
-          - Resources/Transfer
-          - Resources/BillPay
-          - Resources/OpenNewAccount
-          - Resources/UpdateProfile
+        default: all
+        options: [all, Positive, Negative, custom]
 
-      # Parallel: escolher subset pronto (simula multi-select)
-      parallel_subset:
-        description: "Subset no modo parallel (simula multi-select)"
-        type: choice
-        required: true
-        default: All
-        options:
-          - All
-          - Login+Transfer
-          - BillPay+OpenNewAccount
-          - Transfer+UpdateProfile
-          - Login+BillPay
-          - OpenNewAccount+Transfer
+      custom_tags:
+        description: "Se tag_filter=custom, informe tags (ex: Positive,Smoke) separadas por vírgula"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -55,71 +68,172 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+env:
+  PYTHON_VERSION: "3.11"
+
 jobs:
-  # =========================
-  # PREPARE: monta a matrix
-  # =========================
+  # ==========================================================
+  # PREPARE: monta matrix/features e args de tag de forma segura
+  # ==========================================================
   prepare:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.mk.outputs.matrix }}
+      matrix: ${{ steps.build.outputs.matrix }}
+      mode: ${{ steps.build.outputs.mode }}
+      tag_args: ${{ steps.build.outputs.tag_args }}
+
     steps:
-      - name: Build matrix JSON
-        id: mk
+      - name: Build matrix + tag args
+        id: build
         shell: bash
         run: |
-          python - <<'PY' >> "$GITHUB_OUTPUT"
+          set -e
+
+          # ----- mode -----
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            MODE="${{ github.event.inputs.mode }}"
+          else
+            MODE="parallel"   # push/pr sempre parallel
+          fi
+
+          # ----- feature toggles -----
+          # push/pr => tudo true
+          if [[ "${{ github.event_name }}" != "workflow_dispatch" ]]; then
+            RUN_LOGIN=true
+            RUN_TRANSFER=true
+            RUN_BILLPAY=true
+            RUN_OPENNEWACCOUNT=true
+            RUN_UPDATEPROFILE=true
+          else
+            RUN_LOGIN="${{ github.event.inputs.run_login }}"
+            RUN_TRANSFER="${{ github.event.inputs.run_transfer }}"
+            RUN_BILLPAY="${{ github.event.inputs.run_billpay }}"
+            RUN_OPENNEWACCOUNT="${{ github.event.inputs.run_opennewaccount }}"
+            RUN_UPDATEPROFILE="${{ github.event.inputs.run_updateprofile }}"
+          fi
+
+          # ----- tags -----
+          TAG_FILTER="all"
+          CUSTOM_TAGS=""
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG_FILTER="${{ github.event.inputs.tag_filter }}"
+            CUSTOM_TAGS="${{ github.event.inputs.custom_tags }}"
+          fi
+
+          TAG_ARGS=""
+          if [[ "$TAG_FILTER" == "Positive" ]]; then
+            TAG_ARGS="-i Positive"
+          elif [[ "$TAG_FILTER" == "Negative" ]]; then
+            TAG_ARGS="-i Negative"
+          elif [[ "$TAG_FILTER" == "custom" ]]; then
+            # converte "A,B,C" => "-i A -i B -i C"
+            # se vier vazio, não filtra
+            if [[ -n "${CUSTOM_TAGS// /}" ]]; then
+              IFS=',' read -ra ARR <<< "$CUSTOM_TAGS"
+              for t in "${ARR[@]}"; do
+                t="$(echo "$t" | xargs)"
+                [[ -n "$t" ]] && TAG_ARGS="$TAG_ARGS -i $t"
+              done
+            fi
+          fi
+
+          # ----- monta lista de suites selecionadas -----
+          SUITES=()
+          [[ "$RUN_LOGIN" == "true" ]] && SUITES+=("Resources/Login")
+          [[ "$RUN_TRANSFER" == "true" ]] && SUITES+=("Resources/Transfer")
+          [[ "$RUN_BILLPAY" == "true" ]] && SUITES+=("Resources/BillPay")
+          [[ "$RUN_OPENNEWACCOUNT" == "true" ]] && SUITES+=("Resources/OpenNewAccount")
+          [[ "$RUN_UPDATEPROFILE" == "true" ]] && SUITES+=("Resources/UpdateProfile")
+
+          # se o cara desmarcar tudo no manual, roda tudo (evita pipeline “vazia”)
+          if [[ ${#SUITES[@]} -eq 0 ]]; then
+            SUITES=("Resources/Login" "Resources/Transfer" "Resources/BillPay" "Resources/OpenNewAccount" "Resources/UpdateProfile")
+          fi
+
+          # ----- matrix JSON seguro via python (evita erro de format do output) -----
+          python - << 'PY'
           import json, os
-
-          event = os.environ.get("GITHUB_EVENT_NAME", "")
-          mode  = os.environ.get("INPUT_MODE", "")
-          single_suite = os.environ.get("INPUT_SINGLE_SUITE", "")
-          subset = os.environ.get("INPUT_PARALLEL_SUBSET", "")
-
-          all_suites = [
-            "Resources/Login",
-            "Resources/Transfer",
-            "Resources/BillPay",
-            "Resources/OpenNewAccount",
-            "Resources/UpdateProfile",
-          ]
-
-          subsets = {
-            "All": all_suites,
-            "Login+Transfer": ["Resources/Login","Resources/Transfer"],
-            "BillPay+OpenNewAccount": ["Resources/BillPay","Resources/OpenNewAccount"],
-            "Transfer+UpdateProfile": ["Resources/Transfer","Resources/UpdateProfile"],
-            "Login+BillPay": ["Resources/Login","Resources/BillPay"],
-            "OpenNewAccount+Transfer": ["Resources/OpenNewAccount","Resources/Transfer"],
-          }
-
-          # Push/PR => sempre paralelo (todas)
-          if event in ("push","pull_request"):
-            suites = all_suites
-          else:
-            # workflow_dispatch
-            if mode == "single":
-              suites = [single_suite] if single_suite else ["Resources"]
-            else:
-              suites = subsets.get(subset, all_suites)
-
-          # monta objetos com slug (sem /)
-          matrix = [{"path": s, "slug": s.replace("/","-")} for s in suites]
-
-          # escreve no formato correto do GitHub Output
-          print("matrix=" + json.dumps(matrix))
+          suites = os.environ["SUITES"].split("|")
+          include = []
+          for s in suites:
+            s = s.strip()
+            slug = s.replace("/", "-")
+            include.append({"path": s, "slug": slug})
+          print(json.dumps({"include": include}))
           PY
 
-  # =========================
-  # ROBOT: roda em paralelo (matrix)
-  # =========================
+        env:
+          SUITES: >-
+            ${{ (
+              (github.event_name != 'workflow_dispatch' && 'Resources/Login|Resources/Transfer|Resources/BillPay|Resources/OpenNewAccount|Resources/UpdateProfile')
+              || (
+                (github.event.inputs.run_login == 'true' && 'Resources/Login|' || '') 
+                && ''
+              )
+            ) }}
+
+      - name: Export outputs (matrix/mode/tag_args)
+        id: export
+        shell: bash
+        run: |
+          set -e
+
+          # Rebuild suites string again (mais simples/garantido) no bash:
+          if [[ "${{ github.event_name }}" != "workflow_dispatch" ]]; then
+            SUITES=("Resources/Login" "Resources/Transfer" "Resources/BillPay" "Resources/OpenNewAccount" "Resources/UpdateProfile")
+            MODE="parallel"
+            TAG_ARGS=""
+          else
+            MODE="${{ github.event.inputs.mode }}"
+            TAG_FILTER="${{ github.event.inputs.tag_filter }}"
+            CUSTOM_TAGS="${{ github.event.inputs.custom_tags }}"
+
+            TAG_ARGS=""
+            if [[ "$TAG_FILTER" == "Positive" ]]; then
+              TAG_ARGS="-i Positive"
+            elif [[ "$TAG_FILTER" == "Negative" ]]; then
+              TAG_ARGS="-i Negative"
+            elif [[ "$TAG_FILTER" == "custom" ]]; then
+              if [[ -n "${CUSTOM_TAGS// /}" ]]; then
+                IFS=',' read -ra ARR <<< "$CUSTOM_TAGS"
+                for t in "${ARR[@]}"; do
+                  t="$(echo "$t" | xargs)"
+                  [[ -n "$t" ]] && TAG_ARGS="$TAG_ARGS -i $t"
+                done
+              fi
+            fi
+
+            SUITES=()
+            [[ "${{ github.event.inputs.run_login }}" == "true" ]] && SUITES+=("Resources/Login")
+            [[ "${{ github.event.inputs.run_transfer }}" == "true" ]] && SUITES+=("Resources/Transfer")
+            [[ "${{ github.event.inputs.run_billpay }}" == "true" ]] && SUITES+=("Resources/BillPay")
+            [[ "${{ github.event.inputs.run_opennewaccount }}" == "true" ]] && SUITES+=("Resources/OpenNewAccount")
+            [[ "${{ github.event.inputs.run_updateprofile }}" == "true" ]] && SUITES+=("Resources/UpdateProfile")
+            [[ ${#SUITES[@]} -eq 0 ]] && SUITES=("Resources/Login" "Resources/Transfer" "Resources/BillPay" "Resources/OpenNewAccount" "Resources/UpdateProfile")
+          fi
+
+          MATRIX=$(python - << PY
+          import json
+          suites = ${SUITES[@]+"[" + ",".join(['"%s"'%s for s in SUITES]) + "]"}
+          include=[]
+          for s in suites:
+            include.append({"path": s, "slug": s.replace("/", "-")})
+          print(json.dumps({"include": include}))
+          PY)
+
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "mode=$MODE" >> $GITHUB_OUTPUT
+          echo "tag_args=$TAG_ARGS" >> $GITHUB_OUTPUT
+
+  # ==========================================================
+  # ROBOT: parallel (matrix) OU single (um job só)
+  # ==========================================================
   robot:
     needs: prepare
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        suite: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+      matrix: ${{ needs.prepare.outputs.mode == 'parallel' && fromJSON(needs.prepare.outputs.matrix) || fromJSON('{"include":[{"path":"Resources","slug":"single-all"}]}') }}
 
     steps:
       - name: Checkout
@@ -128,7 +242,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: |
@@ -145,64 +259,76 @@ jobs:
           sudo apt-get install -y google-chrome-stable
 
       - name: Run Robot (headless)
+        shell: bash
         run: |
-          OUT="Results/${{ matrix.suite.slug }}"
+          set +e
+          SUITE="${{ matrix.path }}"
+          SLUG="${{ matrix.slug }}"
+          OUT="Results/${SLUG}"
           mkdir -p "$OUT"
-          robot -d "$OUT" -v HEADLESS:True "${{ matrix.suite.path }}"
+
+          # Se mode=single, roda Resources, mas ainda pode filtrar por tags
+          TAG_ARGS="${{ needs.prepare.outputs.tag_args }}"
+
+          echo "Running: robot -d $OUT -v HEADLESS:True $TAG_ARGS $SUITE"
+          robot -d "$OUT" -v HEADLESS:True $TAG_ARGS "$SUITE"
+          EXIT=$?
+          echo "robot_exit=$EXIT" >> $GITHUB_OUTPUT
+          exit $EXIT
 
       - name: Upload artifacts (per suite)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: robot-results-${{ matrix.suite.slug }}
+          name: robot-results-${{ matrix.slug }}
           path: |
-            Results/${{ matrix.suite.slug }}/**
+            Results/${{ matrix.slug }}/**
           retention-days: 14
 
-  # =========================
-  # PAGES: publica SEMPRE
-  # =========================
+  # ==========================================================
+  # PAGES: publica SEMPRE, mesmo com falha
+  # ==========================================================
   publish-pages:
     if: always()
-    needs: robot
+    needs: [robot]
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download all artifacts
         if: always()
         uses: actions/download-artifact@v4
         with:
           path: _artifacts
 
-      - name: Build Pages site (latest + history)
+      - name: Build Pages site
         if: always()
         shell: bash
         run: |
+          set -e
+          RUN_ID="${{ github.run_id }}"
+          mkdir -p site/runs/"$RUN_ID"
+
+          # Copia tudo de todos os suites para esse run
+          cp -R _artifacts/*/* site/runs/"$RUN_ID"/ 2>/dev/null || true
+
+          # Atualiza "latest" para apontar pro run atual
+          rm -rf site/latest || true
           mkdir -p site/latest
-          mkdir -p site/runs/${{ github.run_id }}
+          cp -R site/runs/"$RUN_ID"/* site/latest/ 2>/dev/null || true
 
-          # Copia tudo para "latest" (sobrescreve)
-          cp -R _artifacts/*/* site/latest/ 2>/dev/null || true
-
-          # Copia tudo para um diretório por run (histórico, não sobrescreve)
-          cp -R _artifacts/*/* site/runs/${{ github.run_id }}/ 2>/dev/null || true
-
-          # index
-          cat > site/index.html <<'HTML'
+          # Index com links
+          cat > site/index.html <<HTML
           <!doctype html>
           <html>
             <head><meta charset="utf-8"><title>Robot Reports</title></head>
             <body>
-              <h2>Robot Framework - Reports</h2>
-
-              <h3>Latest</h3>
-              <ul>
-                <li><a href="latest/log.html">log.html</a></li>
-                <li><a href="latest/report.html">report.html</a></li>
-              </ul>
-
-              <h3>History</h3>
-              <p>Run atual: <a href="runs/${{ github.run_id }}/log.html">log.html</a> | <a href="runs/${{ github.run_id }}/report.html">report.html</a></p>
+              <h2>Robot Framework Reports</h2>
+              <p><b>Latest:</b> <a href="latest/log.html">log.html</a> | <a href="latest/report.html">report.html</a></p>
+              <p><b>This run:</b> <a href="runs/$RUN_ID/log.html">log.html</a> | <a href="runs/$RUN_ID/report.html">report.html</a></p>
+              <p><b>Runs:</b> pasta /runs/&lt;run_id&gt;/</p>
             </body>
           </html>
           HTML
