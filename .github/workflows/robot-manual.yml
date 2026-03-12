@@ -14,27 +14,27 @@ on:
         description: "Rodar feature Login?"
         type: boolean
         required: false
-        default: true
+        default: false
       run_transfer:
         description: "Rodar feature Transfer?"
         type: boolean
         required: false
-        default: true
+        default: false
       run_billpay:
         description: "Rodar feature BillPay?"
         type: boolean
         required: false
-        default: true
+        default: false
       run_opennewaccount:
         description: "Rodar feature OpenNewAccount?"
         type: boolean
         required: false
-        default: true
+        default: false
       run_updateprofile:
         description: "Rodar feature UpdateProfile?"
         type: boolean
         required: false
-        default: true
+        default: false
 
       tag_filter:
         description: "Filtro por tag"
