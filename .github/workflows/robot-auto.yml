@@ -20,7 +20,7 @@ env:
   RESULTS_DIR: "Results"
 
 jobs:
-    prepare:
+  prepare:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
@@ -79,8 +79,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: robot-results-${{ matrix.suite.slug }}
-          path: |
-            ${{ env.RESULTS_DIR }}/${{ matrix.suite.slug }}/**
+          path: ${{ env.RESULTS_DIR }}/${{ matrix.suite.slug }}/**
           retention-days: 14
 
   publish-pages:
@@ -105,75 +104,76 @@ jobs:
           mkdir -p site/latest site/runs/"$RUN"
           touch site/.nojekyll
 
-          # Copia por suite: _artifacts/<artifactName>/... (cada artifact tem uma pasta)
           for d in _artifacts/*; do
             [ -d "$d" ] || continue
-            bn="$(basename "$d")"  # robot-results-Resources-Login
-            slug="${bn#robot-results-}"  # Resources-Login
+            bn="$(basename "$d")"
+            slug="${bn#robot-results-}"
             mkdir -p "site/latest/$slug" "site/runs/$RUN/$slug"
             cp -R "$d/"* "site/latest/$slug/" 2>/dev/null || true
             cp -R "$d/"* "site/runs/$RUN/$slug/" 2>/dev/null || true
           done
 
-          # Gera index por Python (evita “trecho HTML” quebrar YAML)
           python - <<'PY'
-          import os, pathlib
+          import os
+          import pathlib
 
           site = pathlib.Path("site")
-          run_id = os.environ.get("RUN", "")
-          run_id = run_id or os.getenv("GITHUB_RUN_ID","")
+          run_id = os.environ.get("RUN", "") or os.getenv("GITHUB_RUN_ID", "")
 
           def suite_links(folder: pathlib.Path, prefix: str):
-            items = []
-            if folder.exists():
-              for p in sorted(folder.iterdir()):
-                if p.is_dir():
-                  slug = p.name
-                  log = f"{prefix}/{slug}/log.html"
-                  rep = f"{prefix}/{slug}/report.html"
-                  items.append((slug, log, rep))
-            return items
+              items = []
+              if folder.exists():
+                  for p in sorted(folder.iterdir()):
+                      if p.is_dir():
+                          slug = p.name
+                          log = f"{prefix}/{slug}/log.html"
+                          rep = f"{prefix}/{slug}/report.html"
+                          items.append((slug, log, rep))
+              return items
 
-          latest_items = suite_links(site/"latest", "./latest")
-          runs_root = site/"runs"
+          latest_items = suite_links(site / "latest", "./latest")
+          runs_root = site / "runs"
           runs = sorted([p.name for p in runs_root.iterdir() if p.is_dir()], reverse=True) if runs_root.exists() else []
 
-          # root index
-          (site/"index.html").write_text(
+          (site / "index.html").write_text(
               "<!doctype html><html><head><meta charset='utf-8'><title>Robot Reports</title></head><body>"
               "<h1>Robot Framework Reports</h1>"
               "<p><b>Latest:</b> <a href='./latest/'>abrir</a></p>"
               f"<p><b>This run:</b> <a href='./runs/{run_id}/'>abrir</a></p>"
               "<p><b>Runs:</b> <a href='./runs/'>abrir histórico</a></p>"
-              "</body></html>", encoding="utf-8"
+              "</body></html>",
+              encoding="utf-8"
           )
 
-          # latest index
-          html = ["<!doctype html><html><head><meta charset='utf-8'><title>Latest</title></head><body>",
-                  "<h2>Latest</h2><ul>"]
+          html = [
+              "<!doctype html><html><head><meta charset='utf-8'><title>Latest</title></head><body>",
+              "<h2>Latest</h2><ul>"
+          ]
           for slug, log, rep in latest_items:
-            html.append(f"<li><b>{slug}</b> — <a href='{log}'>log</a> | <a href='{rep}'>report</a></li>")
+              html.append(f"<li><b>{slug}</b> — <a href='{log}'>log</a> | <a href='{rep}'>report</a></li>")
           html.append("</ul><p><a href='../'>voltar</a></p></body></html>")
-          (site/"latest"/"index.html").write_text("\n".join(html), encoding="utf-8")
+          (site / "latest" / "index.html").write_text("\n".join(html), encoding="utf-8")
 
-          # runs index
-          html = ["<!doctype html><html><head><meta charset='utf-8'><title>Runs</title></head><body>",
-                  "<h2>Runs</h2><ul>"]
+          html = [
+              "<!doctype html><html><head><meta charset='utf-8'><title>Runs</title></head><body>",
+              "<h2>Runs</h2><ul>"
+          ]
           for r in runs[:50]:
-            html.append(f"<li><a href='./{r}/'>{r}</a></li>")
+              html.append(f"<li><a href='./{r}/'>{r}</a></li>")
           html.append("</ul><p><a href='../'>voltar</a></p></body></html>")
-          (site/"runs"/"index.html").write_text("\n".join(html), encoding="utf-8")
+          (site / "runs" / "index.html").write_text("\n".join(html), encoding="utf-8")
 
-          # per-run index (current run)
-          run_dir = site/"runs"/run_id
-          items = suite_links(run_dir, ".")
-          html = ["<!doctype html><html><head><meta charset='utf-8'><title>This Run</title></head><body>",
-                  f"<h2>Run {run_id}</h2><ul>"]
-          for slug, log, rep in items:
-            html.append(f"<li><b>{slug}</b> — <a href='{log}'>log</a> | <a href='{rep}'>report</a></li>")
-          html.append("</ul><p><a href='../'>voltar</a></p></body></html>")
+          run_dir = site / "runs" / run_id
           run_dir.mkdir(parents=True, exist_ok=True)
-          (run_dir/"index.html").write_text("\n".join(html), encoding="utf-8")
+          items = suite_links(run_dir, ".")
+          html = [
+              "<!doctype html><html><head><meta charset='utf-8'><title>This Run</title></head><body>",
+              f"<h2>Run {run_id}</h2><ul>"
+          ]
+          for slug, log, rep in items:
+              html.append(f"<li><b>{slug}</b> — <a href='{log}'>log</a> | <a href='{rep}'>report</a></li>")
+          html.append("</ul><p><a href='../'>voltar</a></p></body></html>")
+          (run_dir / "index.html").write_text("\n".join(html), encoding="utf-8")
           PY
         env:
           RUN: ${{ github.run_id }}
