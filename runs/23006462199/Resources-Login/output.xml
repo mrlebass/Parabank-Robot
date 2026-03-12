@@ -1,0 +1,959 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.4.1 (Python 3.11.15 on linux)" generated="2026-03-12T14:17:45.918479" rpa="false" schemaversion="5">
+<suite id="s1" name="Login" source="/home/runner/work/Parabank-Robot/Parabank-Robot/Resources/Login">
+<suite id="s1-s1" name="TestCasesLogin" source="/home/runner/work/Parabank-Robot/Parabank-Robot/Resources/Login/TestCasesLogin.robot">
+<test id="s1-s1-t1" name="QBEF-01 Login Sucess" line="9">
+<kw name="Dado que eu acesse o site Parabank" owner="setup_teardown" type="SETUP">
+<kw name="Criar Opcoes Do Browser" owner="setup_teardown">
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-03-12T14:17:46.268310" level="INFO">${is_chrome} = True</msg>
+<var>${is_chrome}</var>
+<arg>'${BROWSER}'.lower() == 'chrome'</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-03-12T14:17:46.267775" elapsed="0.000592"/>
+</kw>
+<if>
+<branch type="IF" condition="${is_chrome}">
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-03-12T14:17:46.268983" level="INFO">${options} = &lt;selenium.webdriver.chrome.options.Options object at 0x7fcf4ba9bb10&gt;</msg>
+<var>${options}</var>
+<arg>sys.modules['selenium.webdriver'].ChromeOptions()</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-03-12T14:17:46.268639" elapsed="0.000376"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:46.269419" level="INFO">${arg_window} = --window-size=1920,1080</msg>
+<var>${arg_window}</var>
+<arg>--window-size=1920,1080</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:46.269144" elapsed="0.000302"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:46.269787" level="INFO">${arg_dev_shm} = --disable-dev-shm-usage</msg>
+<var>${arg_dev_shm}</var>
+<arg>--disable-dev-shm-usage</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:46.269565" elapsed="0.000248"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:46.270143" level="INFO">${arg_sandbox} = --no-sandbox</msg>
+<var>${arg_sandbox}</var>
+<arg>--no-sandbox</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:46.269922" elapsed="0.000246"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<arg>${options}</arg>
+<arg>add_argument</arg>
+<arg>${arg_window}</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2026-03-12T14:17:46.270283" elapsed="0.000287"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<arg>${options}</arg>
+<arg>add_argument</arg>
+<arg>${arg_dev_shm}</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2026-03-12T14:17:46.270684" elapsed="0.000240"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<arg>${options}</arg>
+<arg>add_argument</arg>
+<arg>${arg_sandbox}</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2026-03-12T14:17:46.271033" elapsed="0.000248"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-03-12T14:17:46.271717" level="INFO">${headless} = True</msg>
+<var>${headless}</var>
+<arg>str('${HEADLESS}').lower() in ['true','1','yes']</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-03-12T14:17:46.271418" elapsed="0.000326"/>
+</kw>
+<if>
+<branch type="IF" condition="${headless}">
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:46.272169" level="INFO">${arg_headless} = --headless=new</msg>
+<var>${arg_headless}</var>
+<arg>--headless=new</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:46.271943" elapsed="0.000250"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<arg>${options}</arg>
+<arg>add_argument</arg>
+<arg>${arg_headless}</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2026-03-12T14:17:46.272290" elapsed="0.000258"/>
+</kw>
+<status status="PASS" start="2026-03-12T14:17:46.271818" elapsed="0.000774"/>
+</branch>
+<status status="PASS" start="2026-03-12T14:17:46.271799" elapsed="0.000831"/>
+</if>
+<return>
+<value>${options}</value>
+<status status="PASS" start="2026-03-12T14:17:46.272665" elapsed="0.000044"/>
+</return>
+<status status="PASS" start="2026-03-12T14:17:46.268483" elapsed="0.004264"/>
+</branch>
+<status status="PASS" start="2026-03-12T14:17:46.268458" elapsed="0.004319"/>
+</if>
+<return>
+<value>${None}</value>
+<status status="NOT RUN" start="2026-03-12T14:17:46.272810" elapsed="0.000019"/>
+</return>
+<msg time="2026-03-12T14:17:46.272948" level="INFO">${options} = &lt;selenium.webdriver.chrome.options.Options object at 0x7fcf4ba9bb10&gt;</msg>
+<var>${options}</var>
+<status status="PASS" start="2026-03-12T14:17:46.267063" elapsed="0.005910"/>
+</kw>
+<kw name="Open Browser" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:46.273336" level="INFO">Opening browser 'chrome' to base url 'http://parabank.parasoft.com/parabank/index.htm'.</msg>
+<msg time="2026-03-12T14:17:47.579558" level="WARN">The chromedriver version (145.0.7632.117) detected in PATH at /usr/bin/chromedriver might not be compatible with the detected chrome version (146.0.7680.71); currently, chromedriver 146.0.7680.72 is recommended for chrome 146.*, so it is advised to delete the driver in PATH and retry</msg>
+<arg>${BASE_URL_QAA}</arg>
+<arg>${BROWSER}</arg>
+<arg>options=${options}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-03-12T14:17:46.273092" elapsed="3.313475"/>
+</kw>
+<if>
+<branch type="IF" condition="'${HEADLESS}' != 'True'">
+<kw name="Maximize Browser Window" owner="SeleniumLibrary">
+<doc>Maximizes current browser window.</doc>
+<status status="NOT RUN" start="2026-03-12T14:17:49.587136" elapsed="0.000034"/>
+</kw>
+<status status="NOT RUN" start="2026-03-12T14:17:49.586781" elapsed="0.000427"/>
+</branch>
+<status status="PASS" start="2026-03-12T14:17:49.586731" elapsed="0.000527"/>
+</if>
+<kw name="Set Selenium Timeout" owner="SeleniumLibrary">
+<arg>10s</arg>
+<doc>Sets the timeout that is used by various keywords.</doc>
+<status status="PASS" start="2026-03-12T14:17:49.587408" elapsed="0.001129"/>
+</kw>
+<status status="PASS" start="2026-03-12T14:17:46.266654" elapsed="3.321967"/>
+</kw>
+<kw name="Dado que o usuário esteja na tela de Login" owner="KeywordsLogin">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${CAMPO_USUARIO}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:49.589066" elapsed="0.018968"/>
+</kw>
+<kw name="Element Should Be Visible" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:49.619224" level="INFO">Element 'css:input[name="username"]' is displayed.</msg>
+<arg>${CAMPO_USUARIO}</arg>
+<doc>Verifies that the element identified by ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:49.608247" elapsed="0.011055"/>
+</kw>
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${CAMPO_SENHA}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:49.619496" elapsed="0.013972"/>
+</kw>
+<kw name="Element Should Be Visible" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:49.643835" level="INFO">Element 'css:input[name="password"]' is displayed.</msg>
+<arg>${CAMPO_SENHA}</arg>
+<doc>Verifies that the element identified by ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:49.633659" elapsed="0.010250"/>
+</kw>
+<status status="PASS" start="2026-03-12T14:17:49.588819" elapsed="0.055185"/>
+</kw>
+<kw name="Capturar Print Na Pasta Da Funcionalidade" owner="Common">
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:49.645046" level="INFO">${dir} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login</msg>
+<var>${dir}</var>
+<arg>${OUTPUT DIR}${/}Evidences${/}${feature}</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:49.644629" elapsed="0.000444"/>
+</kw>
+<kw name="Create Directory" owner="OperatingSystem">
+<msg time="2026-03-12T14:17:49.645476" level="INFO" html="true">Created directory '&lt;a href="file:///home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login"&gt;/home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login&lt;/a&gt;'.</msg>
+<arg>${dir}</arg>
+<doc>Creates the specified directory.</doc>
+<status status="PASS" start="2026-03-12T14:17:49.645181" elapsed="0.000352"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:49.645923" level="INFO">${file} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login/QBEF-01 Login Sucess step-01.png</msg>
+<var>${file}</var>
+<arg>${dir}${/}${nome_arquivo}.png</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:49.645640" elapsed="0.000310"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:49.746481" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="Evidences/Login/QBEF-01%20Login%20Sucess%20step-01.png"&gt;&lt;img src="Evidences/Login/QBEF-01%20Login%20Sucess%20step-01.png" width="800px"&gt;&lt;/a&gt;</msg>
+<arg>${file}</arg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-03-12T14:17:49.646068" elapsed="0.100524"/>
+</kw>
+<arg>${TEST NAME} step-01</arg>
+<arg>Login</arg>
+<status status="PASS" start="2026-03-12T14:17:49.644215" elapsed="0.102485"/>
+</kw>
+<kw name="Quando ele preencher os campos de usuario e senha" owner="KeywordsLogin">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:49.747530" level="INFO">Typing text 'john' into text field 'css:input[name="username"]'.</msg>
+<arg>${CAMPO_USUARIO}</arg>
+<arg>${usuario}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-03-12T14:17:49.747281" elapsed="0.057815"/>
+</kw>
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:49.805618" level="INFO">Typing text 'demo' into text field 'css:input[name="password"]'.</msg>
+<arg>${CAMPO_SENHA}</arg>
+<arg>${senha}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-03-12T14:17:49.805333" elapsed="0.063460"/>
+</kw>
+<kw name="Click Button" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:49.869277" level="INFO">Clicking button 'css:input[type='submit'][value="Log In"]'.</msg>
+<arg>${BOTAO_LOGIN}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<status status="PASS" start="2026-03-12T14:17:49.869024" elapsed="0.512830"/>
+</kw>
+<arg>${USUARIO_VALIDO}</arg>
+<arg>${SENHA_VALIDO}</arg>
+<status status="PASS" start="2026-03-12T14:17:49.746924" elapsed="0.635059"/>
+</kw>
+<kw name="Capturar Print Na Pasta Da Funcionalidade" owner="Common">
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:50.383397" level="INFO">${dir} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login</msg>
+<var>${dir}</var>
+<arg>${OUTPUT DIR}${/}Evidences${/}${feature}</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.382855" elapsed="0.000591"/>
+</kw>
+<kw name="Create Directory" owner="OperatingSystem">
+<msg time="2026-03-12T14:17:50.383835" level="INFO" html="true">Directory '&lt;a href="file:///home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login"&gt;/home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login&lt;/a&gt;' already exists.</msg>
+<arg>${dir}</arg>
+<doc>Creates the specified directory.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.383618" elapsed="0.000283"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:50.384478" level="INFO">${file} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login/QBEF-01 Login Sucess step-02.png</msg>
+<var>${file}</var>
+<arg>${dir}${/}${nome_arquivo}.png</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.384051" elapsed="0.000455"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:50.481554" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="Evidences/Login/QBEF-01%20Login%20Sucess%20step-02.png"&gt;&lt;img src="Evidences/Login/QBEF-01%20Login%20Sucess%20step-02.png" width="800px"&gt;&lt;/a&gt;</msg>
+<arg>${file}</arg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.384629" elapsed="0.097034"/>
+</kw>
+<arg>${TEST NAME} step-02</arg>
+<arg>Login</arg>
+<status status="PASS" start="2026-03-12T14:17:50.382271" elapsed="0.099496"/>
+</kw>
+<kw name="Então ele deve ser redirecionado para a página inicial" owner="KeywordsLogin">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${BTN_LOGOUT}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.482290" elapsed="0.013801"/>
+</kw>
+<kw name="Element Should Be Visible" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:50.505820" level="INFO">Element 'css:a[href="logout.htm"]' is displayed.</msg>
+<arg>${BTN_LOGOUT}</arg>
+<doc>Verifies that the element identified by ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.496234" elapsed="0.009649"/>
+</kw>
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${TABELA_TRANSFERENCIA}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.506016" elapsed="0.012396"/>
+</kw>
+<kw name="Element Should Be Visible" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:50.528079" level="INFO">Element 'css:table[id="accountTable"]' is displayed.</msg>
+<arg>${TABELA_TRANSFERENCIA}</arg>
+<doc>Verifies that the element identified by ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.518560" elapsed="0.009577"/>
+</kw>
+<status status="PASS" start="2026-03-12T14:17:50.481990" elapsed="0.046222"/>
+</kw>
+<kw name="Capturar Print Na Pasta Da Funcionalidade" owner="Common">
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:50.529096" level="INFO">${dir} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login</msg>
+<var>${dir}</var>
+<arg>${OUTPUT DIR}${/}Evidences${/}${feature}</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.528761" elapsed="0.000362"/>
+</kw>
+<kw name="Create Directory" owner="OperatingSystem">
+<msg time="2026-03-12T14:17:50.529385" level="INFO" html="true">Directory '&lt;a href="file:///home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login"&gt;/home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login&lt;/a&gt;' already exists.</msg>
+<arg>${dir}</arg>
+<doc>Creates the specified directory.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.529227" elapsed="0.000206"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:50.529808" level="INFO">${file} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login/QBEF-01 Login Sucess step-03.png</msg>
+<var>${file}</var>
+<arg>${dir}${/}${nome_arquivo}.png</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.529532" elapsed="0.000301"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:50.613291" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="Evidences/Login/QBEF-01%20Login%20Sucess%20step-03.png"&gt;&lt;img src="Evidences/Login/QBEF-01%20Login%20Sucess%20step-03.png" width="800px"&gt;&lt;/a&gt;</msg>
+<arg>${file}</arg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.529989" elapsed="0.083425"/>
+</kw>
+<arg>${TEST NAME} step-03</arg>
+<arg>Login</arg>
+<status status="PASS" start="2026-03-12T14:17:50.528422" elapsed="0.085100"/>
+</kw>
+<kw name="Teardown Padrao" owner="Common" type="TEARDOWN">
+<kw name="Run Keyword If Test Failed" owner="BuiltIn">
+<arg>Capture Page Screenshot</arg>
+<arg>${OUTPUTDIR}/FAIL_${TEST NAME}.png</arg>
+<doc>Runs the given keyword with the given arguments, if the test failed.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.614077" elapsed="0.000299"/>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.614495" elapsed="0.062020"/>
+</kw>
+<status status="PASS" start="2026-03-12T14:17:50.613798" elapsed="0.062833"/>
+</kw>
+<tag>Login</tag>
+<tag>Positive</tag>
+<status status="PASS" start="2026-03-12T14:17:46.265864" elapsed="4.410829"/>
+</test>
+<test id="s1-s1-t2" name="QBEF-02 Login Fail" line="21">
+<kw name="Dado que eu acesse o site Parabank" owner="setup_teardown" type="SETUP">
+<kw name="Criar Opcoes Do Browser" owner="setup_teardown">
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-03-12T14:17:50.678573" level="INFO">${is_chrome} = True</msg>
+<var>${is_chrome}</var>
+<arg>'${BROWSER}'.lower() == 'chrome'</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.678095" elapsed="0.000507"/>
+</kw>
+<if>
+<branch type="IF" condition="${is_chrome}">
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-03-12T14:17:50.679139" level="INFO">${options} = &lt;selenium.webdriver.chrome.options.Options object at 0x7fcf4baeed90&gt;</msg>
+<var>${options}</var>
+<arg>sys.modules['selenium.webdriver'].ChromeOptions()</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.678828" elapsed="0.000337"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:50.679604" level="INFO">${arg_window} = --window-size=1920,1080</msg>
+<var>${arg_window}</var>
+<arg>--window-size=1920,1080</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.679273" elapsed="0.000363"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:50.679991" level="INFO">${arg_dev_shm} = --disable-dev-shm-usage</msg>
+<var>${arg_dev_shm}</var>
+<arg>--disable-dev-shm-usage</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.679780" elapsed="0.000234"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:50.680347" level="INFO">${arg_sandbox} = --no-sandbox</msg>
+<var>${arg_sandbox}</var>
+<arg>--no-sandbox</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.680114" elapsed="0.000259"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<arg>${options}</arg>
+<arg>add_argument</arg>
+<arg>${arg_window}</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.680472" elapsed="0.000235"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<arg>${options}</arg>
+<arg>add_argument</arg>
+<arg>${arg_dev_shm}</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.680805" elapsed="0.000224"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<arg>${options}</arg>
+<arg>add_argument</arg>
+<arg>${arg_sandbox}</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.681123" elapsed="0.000253"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-03-12T14:17:50.681940" level="INFO">${headless} = True</msg>
+<var>${headless}</var>
+<arg>str('${HEADLESS}').lower() in ['true','1','yes']</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.681476" elapsed="0.000490"/>
+</kw>
+<if>
+<branch type="IF" condition="${headless}">
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:50.682409" level="INFO">${arg_headless} = --headless=new</msg>
+<var>${arg_headless}</var>
+<arg>--headless=new</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.682170" elapsed="0.000263"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<arg>${options}</arg>
+<arg>add_argument</arg>
+<arg>${arg_headless}</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.682530" elapsed="0.000225"/>
+</kw>
+<status status="PASS" start="2026-03-12T14:17:50.682041" elapsed="0.000756"/>
+</branch>
+<status status="PASS" start="2026-03-12T14:17:50.682023" elapsed="0.000811"/>
+</if>
+<return>
+<value>${options}</value>
+<status status="PASS" start="2026-03-12T14:17:50.682869" elapsed="0.000047"/>
+</return>
+<status status="PASS" start="2026-03-12T14:17:50.678691" elapsed="0.004264"/>
+</branch>
+<status status="PASS" start="2026-03-12T14:17:50.678665" elapsed="0.004322"/>
+</if>
+<return>
+<value>${None}</value>
+<status status="NOT RUN" start="2026-03-12T14:17:50.683019" elapsed="0.000019"/>
+</return>
+<msg time="2026-03-12T14:17:50.683145" level="INFO">${options} = &lt;selenium.webdriver.chrome.options.Options object at 0x7fcf4baeed90&gt;</msg>
+<var>${options}</var>
+<status status="PASS" start="2026-03-12T14:17:50.677888" elapsed="0.005280"/>
+</kw>
+<kw name="Open Browser" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:50.683531" level="INFO">Opening browser 'chrome' to base url 'http://parabank.parasoft.com/parabank/index.htm'.</msg>
+<msg time="2026-03-12T14:17:50.732518" level="WARN">The chromedriver version (145.0.7632.117) detected in PATH at /usr/bin/chromedriver might not be compatible with the detected chrome version (146.0.7680.71); currently, chromedriver 146.0.7680.72 is recommended for chrome 146.*, so it is advised to delete the driver in PATH and retry</msg>
+<arg>${BASE_URL_QAA}</arg>
+<arg>${BROWSER}</arg>
+<arg>options=${options}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-03-12T14:17:50.683289" elapsed="0.848525"/>
+</kw>
+<if>
+<branch type="IF" condition="'${HEADLESS}' != 'True'">
+<kw name="Maximize Browser Window" owner="SeleniumLibrary">
+<doc>Maximizes current browser window.</doc>
+<status status="NOT RUN" start="2026-03-12T14:17:51.532443" elapsed="0.000048"/>
+</kw>
+<status status="NOT RUN" start="2026-03-12T14:17:51.531979" elapsed="0.000567"/>
+</branch>
+<status status="PASS" start="2026-03-12T14:17:51.531947" elapsed="0.000658"/>
+</if>
+<kw name="Set Selenium Timeout" owner="SeleniumLibrary">
+<arg>10s</arg>
+<doc>Sets the timeout that is used by various keywords.</doc>
+<status status="PASS" start="2026-03-12T14:17:51.532753" elapsed="0.001425"/>
+</kw>
+<status status="PASS" start="2026-03-12T14:17:50.677530" elapsed="0.856764"/>
+</kw>
+<kw name="Dado que o usuário esteja na tela de Login" owner="KeywordsLogin">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${CAMPO_USUARIO}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:51.535200" elapsed="0.017545"/>
+</kw>
+<kw name="Element Should Be Visible" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:51.562952" level="INFO">Element 'css:input[name="username"]' is displayed.</msg>
+<arg>${CAMPO_USUARIO}</arg>
+<doc>Verifies that the element identified by ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:51.552927" elapsed="0.010090"/>
+</kw>
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${CAMPO_SENHA}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:51.563152" elapsed="0.016709"/>
+</kw>
+<kw name="Element Should Be Visible" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:51.590242" level="INFO">Element 'css:input[name="password"]' is displayed.</msg>
+<arg>${CAMPO_SENHA}</arg>
+<doc>Verifies that the element identified by ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:51.580010" elapsed="0.010293"/>
+</kw>
+<status status="PASS" start="2026-03-12T14:17:51.534659" elapsed="0.055754"/>
+</kw>
+<kw name="Capturar Print Na Pasta Da Funcionalidade" owner="Common">
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:51.591246" level="INFO">${dir} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login</msg>
+<var>${dir}</var>
+<arg>${OUTPUT DIR}${/}Evidences${/}${feature}</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:51.590908" elapsed="0.000366"/>
+</kw>
+<kw name="Create Directory" owner="OperatingSystem">
+<msg time="2026-03-12T14:17:51.591592" level="INFO" html="true">Directory '&lt;a href="file:///home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login"&gt;/home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login&lt;/a&gt;' already exists.</msg>
+<arg>${dir}</arg>
+<doc>Creates the specified directory.</doc>
+<status status="PASS" start="2026-03-12T14:17:51.591436" elapsed="0.000203"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:51.592011" level="INFO">${file} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login/QBEF-02 Login Fail step-01.png</msg>
+<var>${file}</var>
+<arg>${dir}${/}${nome_arquivo}.png</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:51.591741" elapsed="0.000300"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:51.696828" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="Evidences/Login/QBEF-02%20Login%20Fail%20step-01.png"&gt;&lt;img src="Evidences/Login/QBEF-02%20Login%20Fail%20step-01.png" width="800px"&gt;&lt;/a&gt;</msg>
+<arg>${file}</arg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-03-12T14:17:51.592156" elapsed="0.104778"/>
+</kw>
+<arg>${TEST NAME} step-01</arg>
+<arg>Login</arg>
+<status status="PASS" start="2026-03-12T14:17:51.590591" elapsed="0.106443"/>
+</kw>
+<kw name="Quando ele preencher os campos de usuario e senha" owner="KeywordsLogin">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:51.697807" level="INFO">Typing text 'teste' into text field 'css:input[name="username"]'.</msg>
+<arg>${CAMPO_USUARIO}</arg>
+<arg>${usuario}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-03-12T14:17:51.697594" elapsed="0.058701"/>
+</kw>
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:51.756815" level="INFO">Typing text 'teste' into text field 'css:input[name="password"]'.</msg>
+<arg>${CAMPO_SENHA}</arg>
+<arg>${senha}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-03-12T14:17:51.756547" elapsed="0.074680"/>
+</kw>
+<kw name="Click Button" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:51.831731" level="INFO">Clicking button 'css:input[type='submit'][value="Log In"]'.</msg>
+<arg>${BOTAO_LOGIN}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<status status="PASS" start="2026-03-12T14:17:51.831477" elapsed="0.744049"/>
+</kw>
+<arg>${USUARIO_INVALIDO}</arg>
+<arg>${SENHA_INVALIDO}</arg>
+<status status="PASS" start="2026-03-12T14:17:51.697243" elapsed="0.878407"/>
+</kw>
+<kw name="Capturar Print Na Pasta Da Funcionalidade" owner="Common">
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:52.576648" level="INFO">${dir} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login</msg>
+<var>${dir}</var>
+<arg>${OUTPUT DIR}${/}Evidences${/}${feature}</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.576254" elapsed="0.000425"/>
+</kw>
+<kw name="Create Directory" owner="OperatingSystem">
+<msg time="2026-03-12T14:17:52.576927" level="INFO" html="true">Directory '&lt;a href="file:///home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login"&gt;/home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login&lt;/a&gt;' already exists.</msg>
+<arg>${dir}</arg>
+<doc>Creates the specified directory.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.576782" elapsed="0.000190"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:52.577586" level="INFO">${file} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login/QBEF-02 Login Fail step-02.png</msg>
+<var>${file}</var>
+<arg>${dir}${/}${nome_arquivo}.png</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.577071" elapsed="0.000542"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:52.676869" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="Evidences/Login/QBEF-02%20Login%20Fail%20step-02.png"&gt;&lt;img src="Evidences/Login/QBEF-02%20Login%20Fail%20step-02.png" width="800px"&gt;&lt;/a&gt;</msg>
+<arg>${file}</arg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.577726" elapsed="0.099255"/>
+</kw>
+<arg>${TEST NAME} step-02</arg>
+<arg>Login</arg>
+<status status="PASS" start="2026-03-12T14:17:52.575874" elapsed="0.101208"/>
+</kw>
+<kw name="Então ele NÃO deve ser redirecionado para a página inicial" owner="KeywordsLogin">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${MSG_ERROR_LOGIN}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.677637" elapsed="0.013977"/>
+</kw>
+<kw name="Element Should Be Enabled" owner="SeleniumLibrary">
+<arg>${MSG_ERROR_LOGIN}</arg>
+<doc>Verifies that element identified by ``locator`` is enabled.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.691756" elapsed="0.015118"/>
+</kw>
+<kw name="Element Should Contain" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:52.809771" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-1.png"&gt;&lt;img src="selenium-screenshot-1.png" width="800px"&gt;&lt;/a&gt;</msg>
+<msg time="2026-03-12T14:17:52.809940" level="FAIL">Element 'css:p[class="error"]' should have contained text 'The username and password could not be verified.' but its text was 'An internal error has occurred and has been logged.'.</msg>
+<arg>${MSG_ERROR_LOGIN}</arg>
+<arg>${message_error}</arg>
+<doc>Verifies that element ``locator`` contains text ``expected``.</doc>
+<status status="FAIL" start="2026-03-12T14:17:52.707003" elapsed="0.103799">Element 'css:p[class="error"]' should have contained text 'The username and password could not be verified.' but its text was 'An internal error has occurred and has been logged.'.</status>
+</kw>
+<arg>${MSG_ERROR_USER}</arg>
+<status status="FAIL" start="2026-03-12T14:17:52.677298" elapsed="0.133666">Element 'css:p[class="error"]' should have contained text 'The username and password could not be verified.' but its text was 'An internal error has occurred and has been logged.'.</status>
+</kw>
+<kw name="Capturar Print Na Pasta Da Funcionalidade" owner="Common">
+<arg>${TEST NAME} step-03</arg>
+<arg>Login</arg>
+<status status="NOT RUN" start="2026-03-12T14:17:52.811218" elapsed="0.000036"/>
+</kw>
+<kw name="Teardown Padrao" owner="Common" type="TEARDOWN">
+<kw name="Run Keyword If Test Failed" owner="BuiltIn">
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:52.893165" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="FAIL_QBEF-02%20Login%20Fail.png"&gt;&lt;img src="FAIL_QBEF-02%20Login%20Fail.png" width="800px"&gt;&lt;/a&gt;</msg>
+<arg>${OUTPUTDIR}/FAIL_${TEST NAME}.png</arg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.812149" elapsed="0.081124"/>
+</kw>
+<arg>Capture Page Screenshot</arg>
+<arg>${OUTPUTDIR}/FAIL_${TEST NAME}.png</arg>
+<doc>Runs the given keyword with the given arguments, if the test failed.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.811818" elapsed="0.081564"/>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.893544" elapsed="0.062048"/>
+</kw>
+<status status="PASS" start="2026-03-12T14:17:52.811505" elapsed="0.144207"/>
+</kw>
+<tag>Login</tag>
+<tag>Negative</tag>
+<status status="FAIL" start="2026-03-12T14:17:50.677049" elapsed="2.278725">Element 'css:p[class="error"]' should have contained text 'The username and password could not be verified.' but its text was 'An internal error has occurred and has been logged.'.</status>
+</test>
+<test id="s1-s1-t3" name="QBEF-03 Login Fail - EMPTY Fields" line="32">
+<kw name="Dado que eu acesse o site Parabank" owner="setup_teardown" type="SETUP">
+<kw name="Criar Opcoes Do Browser" owner="setup_teardown">
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-03-12T14:17:52.957689" level="INFO">${is_chrome} = True</msg>
+<var>${is_chrome}</var>
+<arg>'${BROWSER}'.lower() == 'chrome'</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.957169" elapsed="0.000558"/>
+</kw>
+<if>
+<branch type="IF" condition="${is_chrome}">
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-03-12T14:17:52.958296" level="INFO">${options} = &lt;selenium.webdriver.chrome.options.Options object at 0x7fcf4bb35a90&gt;</msg>
+<var>${options}</var>
+<arg>sys.modules['selenium.webdriver'].ChromeOptions()</arg>
+<arg>sys</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.957988" elapsed="0.000366"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:52.958719" level="INFO">${arg_window} = --window-size=1920,1080</msg>
+<var>${arg_window}</var>
+<arg>--window-size=1920,1080</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.958470" elapsed="0.000274"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:52.959042" level="INFO">${arg_dev_shm} = --disable-dev-shm-usage</msg>
+<var>${arg_dev_shm}</var>
+<arg>--disable-dev-shm-usage</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.958845" elapsed="0.000221"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:52.959397" level="INFO">${arg_sandbox} = --no-sandbox</msg>
+<var>${arg_sandbox}</var>
+<arg>--no-sandbox</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.959165" elapsed="0.000256"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<arg>${options}</arg>
+<arg>add_argument</arg>
+<arg>${arg_window}</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.959518" elapsed="0.000233"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<arg>${options}</arg>
+<arg>add_argument</arg>
+<arg>${arg_dev_shm}</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.959848" elapsed="0.000217"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<arg>${options}</arg>
+<arg>add_argument</arg>
+<arg>${arg_sandbox}</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.960160" elapsed="0.000248"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2026-03-12T14:17:52.960997" level="INFO">${headless} = True</msg>
+<var>${headless}</var>
+<arg>str('${HEADLESS}').lower() in ['true','1','yes']</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.960510" elapsed="0.000512"/>
+</kw>
+<if>
+<branch type="IF" condition="${headless}">
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:52.961501" level="INFO">${arg_headless} = --headless=new</msg>
+<var>${arg_headless}</var>
+<arg>--headless=new</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.961226" elapsed="0.000300"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<arg>${options}</arg>
+<arg>add_argument</arg>
+<arg>${arg_headless}</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.961625" elapsed="0.000231"/>
+</kw>
+<status status="PASS" start="2026-03-12T14:17:52.961098" elapsed="0.000799"/>
+</branch>
+<status status="PASS" start="2026-03-12T14:17:52.961078" elapsed="0.000857"/>
+</if>
+<return>
+<value>${options}</value>
+<status status="PASS" start="2026-03-12T14:17:52.961970" elapsed="0.000047"/>
+</return>
+<status status="PASS" start="2026-03-12T14:17:52.957832" elapsed="0.004223"/>
+</branch>
+<status status="PASS" start="2026-03-12T14:17:52.957804" elapsed="0.004284"/>
+</if>
+<return>
+<value>${None}</value>
+<status status="NOT RUN" start="2026-03-12T14:17:52.962119" elapsed="0.000019"/>
+</return>
+<msg time="2026-03-12T14:17:52.962241" level="INFO">${options} = &lt;selenium.webdriver.chrome.options.Options object at 0x7fcf4bb35a90&gt;</msg>
+<var>${options}</var>
+<status status="PASS" start="2026-03-12T14:17:52.956958" elapsed="0.005307"/>
+</kw>
+<kw name="Open Browser" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:52.962647" level="INFO">Opening browser 'chrome' to base url 'http://parabank.parasoft.com/parabank/index.htm'.</msg>
+<msg time="2026-03-12T14:17:53.011014" level="WARN">The chromedriver version (145.0.7632.117) detected in PATH at /usr/bin/chromedriver might not be compatible with the detected chrome version (146.0.7680.71); currently, chromedriver 146.0.7680.72 is recommended for chrome 146.*, so it is advised to delete the driver in PATH and retry</msg>
+<arg>${BASE_URL_QAA}</arg>
+<arg>${BROWSER}</arg>
+<arg>options=${options}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<status status="PASS" start="2026-03-12T14:17:52.962418" elapsed="0.895275"/>
+</kw>
+<if>
+<branch type="IF" condition="'${HEADLESS}' != 'True'">
+<kw name="Maximize Browser Window" owner="SeleniumLibrary">
+<doc>Maximizes current browser window.</doc>
+<status status="NOT RUN" start="2026-03-12T14:17:53.858336" elapsed="0.000053"/>
+</kw>
+<status status="NOT RUN" start="2026-03-12T14:17:53.857923" elapsed="0.000528"/>
+</branch>
+<status status="PASS" start="2026-03-12T14:17:53.857879" elapsed="0.000632"/>
+</if>
+<kw name="Set Selenium Timeout" owner="SeleniumLibrary">
+<arg>10s</arg>
+<doc>Sets the timeout that is used by various keywords.</doc>
+<status status="PASS" start="2026-03-12T14:17:53.858663" elapsed="0.001274"/>
+</kw>
+<status status="PASS" start="2026-03-12T14:17:52.956603" elapsed="0.903418"/>
+</kw>
+<kw name="Dado que o usuário esteja na tela de Login" owner="KeywordsLogin">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${CAMPO_USUARIO}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:53.860710" elapsed="0.016970"/>
+</kw>
+<kw name="Element Should Be Visible" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:53.888580" level="INFO">Element 'css:input[name="username"]' is displayed.</msg>
+<arg>${CAMPO_USUARIO}</arg>
+<doc>Verifies that the element identified by ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:53.877845" elapsed="0.010802"/>
+</kw>
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${CAMPO_SENHA}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:53.888784" elapsed="0.013489"/>
+</kw>
+<kw name="Element Should Be Visible" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:53.912466" level="INFO">Element 'css:input[name="password"]' is displayed.</msg>
+<arg>${CAMPO_SENHA}</arg>
+<doc>Verifies that the element identified by ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:53.902441" elapsed="0.010082"/>
+</kw>
+<status status="PASS" start="2026-03-12T14:17:53.860288" elapsed="0.052310"/>
+</kw>
+<kw name="Capturar Print Na Pasta Da Funcionalidade" owner="Common">
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:53.913437" level="INFO">${dir} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login</msg>
+<var>${dir}</var>
+<arg>${OUTPUT DIR}${/}Evidences${/}${feature}</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:53.913080" elapsed="0.000383"/>
+</kw>
+<kw name="Create Directory" owner="OperatingSystem">
+<msg time="2026-03-12T14:17:53.913706" level="INFO" html="true">Directory '&lt;a href="file:///home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login"&gt;/home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login&lt;/a&gt;' already exists.</msg>
+<arg>${dir}</arg>
+<doc>Creates the specified directory.</doc>
+<status status="PASS" start="2026-03-12T14:17:53.913568" elapsed="0.000184"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:53.914116" level="INFO">${file} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login/QBEF-03 Login Fail - EMPTY Fields step-01.png</msg>
+<var>${file}</var>
+<arg>${dir}${/}${nome_arquivo}.png</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:53.913851" elapsed="0.000290"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:54.012369" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="Evidences/Login/QBEF-03%20Login%20Fail%20-%20EMPTY%20Fields%20step-01.png"&gt;&lt;img src="Evidences/Login/QBEF-03%20Login%20Fail%20-%20EMPTY%20Fields%20step-01.png" width="800px"&gt;&lt;/a&gt;</msg>
+<arg>${file}</arg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-03-12T14:17:53.914254" elapsed="0.098231"/>
+</kw>
+<arg>${TEST NAME} step-01</arg>
+<arg>Login</arg>
+<status status="PASS" start="2026-03-12T14:17:53.912765" elapsed="0.099821"/>
+</kw>
+<kw name="Quando ele preencher os campos de usuario e senha" owner="KeywordsLogin">
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:54.013953" level="INFO">Typing text '' into text field 'css:input[name="username"]'.</msg>
+<arg>${CAMPO_USUARIO}</arg>
+<arg>${usuario}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.013741" elapsed="0.054227"/>
+</kw>
+<kw name="Input Text" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:54.068491" level="INFO">Typing text '' into text field 'css:input[name="password"]'.</msg>
+<arg>${CAMPO_SENHA}</arg>
+<arg>${senha}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.068188" elapsed="0.060410"/>
+</kw>
+<kw name="Click Button" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:54.129093" level="INFO">Clicking button 'css:input[type='submit'][value="Log In"]'.</msg>
+<arg>${BOTAO_LOGIN}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.128836" elapsed="0.151776"/>
+</kw>
+<arg>${EMPTY}</arg>
+<arg>${EMPTY}</arg>
+<status status="PASS" start="2026-03-12T14:17:54.012794" elapsed="0.268001"/>
+</kw>
+<kw name="Capturar Print Na Pasta Da Funcionalidade" owner="Common">
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:54.282251" level="INFO">${dir} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login</msg>
+<var>${dir}</var>
+<arg>${OUTPUT DIR}${/}Evidences${/}${feature}</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.281690" elapsed="0.000610"/>
+</kw>
+<kw name="Create Directory" owner="OperatingSystem">
+<msg time="2026-03-12T14:17:54.282716" level="INFO" html="true">Directory '&lt;a href="file:///home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login"&gt;/home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login&lt;/a&gt;' already exists.</msg>
+<arg>${dir}</arg>
+<doc>Creates the specified directory.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.282497" elapsed="0.000288"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:54.283662" level="INFO">${file} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login/QBEF-03 Login Fail - EMPTY Fields step-02.png</msg>
+<var>${file}</var>
+<arg>${dir}${/}${nome_arquivo}.png</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.282940" elapsed="0.000764"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:54.427887" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="Evidences/Login/QBEF-03%20Login%20Fail%20-%20EMPTY%20Fields%20step-02.png"&gt;&lt;img src="Evidences/Login/QBEF-03%20Login%20Fail%20-%20EMPTY%20Fields%20step-02.png" width="800px"&gt;&lt;/a&gt;</msg>
+<arg>${file}</arg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.283885" elapsed="0.144113"/>
+</kw>
+<arg>${TEST NAME} step-02</arg>
+<arg>Login</arg>
+<status status="PASS" start="2026-03-12T14:17:54.281113" elapsed="0.146990"/>
+</kw>
+<kw name="Então ele NÃO deve ser redirecionado para a página inicial" owner="KeywordsLogin">
+<kw name="Wait Until Element Is Visible" owner="SeleniumLibrary">
+<arg>${MSG_ERROR_LOGIN}</arg>
+<arg>10s</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.428656" elapsed="0.014198"/>
+</kw>
+<kw name="Element Should Be Enabled" owner="SeleniumLibrary">
+<arg>${MSG_ERROR_LOGIN}</arg>
+<doc>Verifies that element identified by ``locator`` is enabled.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.443054" elapsed="0.015710"/>
+</kw>
+<kw name="Element Should Contain" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:54.474268" level="INFO">Element 'css:p[class="error"]' contains text 'Please enter a username and password.'.</msg>
+<arg>${MSG_ERROR_LOGIN}</arg>
+<arg>${message_error}</arg>
+<doc>Verifies that element ``locator`` contains text ``expected``.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.458957" elapsed="0.015426"/>
+</kw>
+<arg>${MSG_ERROR_FIELD}</arg>
+<status status="PASS" start="2026-03-12T14:17:54.428337" elapsed="0.046145"/>
+</kw>
+<kw name="Capturar Print Na Pasta Da Funcionalidade" owner="Common">
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:54.475455" level="INFO">${dir} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login</msg>
+<var>${dir}</var>
+<arg>${OUTPUT DIR}${/}Evidences${/}${feature}</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.475040" elapsed="0.000443"/>
+</kw>
+<kw name="Create Directory" owner="OperatingSystem">
+<msg time="2026-03-12T14:17:54.475730" level="INFO" html="true">Directory '&lt;a href="file:///home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login"&gt;/home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login&lt;/a&gt;' already exists.</msg>
+<arg>${dir}</arg>
+<doc>Creates the specified directory.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.475586" elapsed="0.000190"/>
+</kw>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2026-03-12T14:17:54.476151" level="INFO">${file} = /home/runner/work/Parabank-Robot/Parabank-Robot/Results/Resources-Login/Evidences/Login/QBEF-03 Login Fail - EMPTY Fields step-03.png</msg>
+<var>${file}</var>
+<arg>${dir}${/}${nome_arquivo}.png</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.475876" elapsed="0.000300"/>
+</kw>
+<kw name="Capture Page Screenshot" owner="SeleniumLibrary">
+<msg time="2026-03-12T14:17:54.559960" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="Evidences/Login/QBEF-03%20Login%20Fail%20-%20EMPTY%20Fields%20step-03.png"&gt;&lt;img src="Evidences/Login/QBEF-03%20Login%20Fail%20-%20EMPTY%20Fields%20step-03.png" width="800px"&gt;&lt;/a&gt;</msg>
+<arg>${file}</arg>
+<doc>Takes a screenshot of the current page and embeds it into a log file.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.476286" elapsed="0.083787"/>
+</kw>
+<arg>${TEST NAME} step-03</arg>
+<arg>Login</arg>
+<status status="PASS" start="2026-03-12T14:17:54.474689" elapsed="0.085488"/>
+</kw>
+<kw name="Teardown Padrao" owner="Common" type="TEARDOWN">
+<kw name="Run Keyword If Test Failed" owner="BuiltIn">
+<arg>Capture Page Screenshot</arg>
+<arg>${OUTPUTDIR}/FAIL_${TEST NAME}.png</arg>
+<doc>Runs the given keyword with the given arguments, if the test failed.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.560758" elapsed="0.000263"/>
+</kw>
+<kw name="Close Browser" owner="SeleniumLibrary">
+<doc>Closes the current browser.</doc>
+<status status="PASS" start="2026-03-12T14:17:54.561135" elapsed="0.061559"/>
+</kw>
+<status status="PASS" start="2026-03-12T14:17:54.560473" elapsed="0.062339"/>
+</kw>
+<tag>Login</tag>
+<tag>Negative</tag>
+<status status="PASS" start="2026-03-12T14:17:52.956118" elapsed="1.666751"/>
+</test>
+<status status="FAIL" start="2026-03-12T14:17:45.947444" elapsed="8.675964"/>
+</suite>
+<status status="FAIL" start="2026-03-12T14:17:45.919307" elapsed="8.704689"/>
+</suite>
+<statistics>
+<total>
+<stat pass="2" fail="1" skip="0">All Tests</stat>
+</total>
+<tag>
+<stat pass="2" fail="1" skip="0">Login</stat>
+<stat pass="1" fail="1" skip="0">Negative</stat>
+<stat pass="1" fail="0" skip="0">Positive</stat>
+</tag>
+<suite>
+<stat name="Login" id="s1" pass="2" fail="1" skip="0">Login</stat>
+<stat name="TestCasesLogin" id="s1-s1" pass="2" fail="1" skip="0">Login.TestCasesLogin</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2026-03-12T14:17:47.579558" level="WARN">The chromedriver version (145.0.7632.117) detected in PATH at /usr/bin/chromedriver might not be compatible with the detected chrome version (146.0.7680.71); currently, chromedriver 146.0.7680.72 is recommended for chrome 146.*, so it is advised to delete the driver in PATH and retry</msg>
+<msg time="2026-03-12T14:17:50.732518" level="WARN">The chromedriver version (145.0.7632.117) detected in PATH at /usr/bin/chromedriver might not be compatible with the detected chrome version (146.0.7680.71); currently, chromedriver 146.0.7680.72 is recommended for chrome 146.*, so it is advised to delete the driver in PATH and retry</msg>
+<msg time="2026-03-12T14:17:53.011014" level="WARN">The chromedriver version (145.0.7632.117) detected in PATH at /usr/bin/chromedriver might not be compatible with the detected chrome version (146.0.7680.71); currently, chromedriver 146.0.7680.72 is recommended for chrome 146.*, so it is advised to delete the driver in PATH and retry</msg>
+</errors>
+</robot>
