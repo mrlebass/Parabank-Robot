@@ -1,50 +1,72 @@
 name: Robot - Manual (Select Suites)
 
+run-name: >-
+  Robot Manual | mode=${{ inputs.mode }} |
+  include=${{ inputs.tag_filter }} |
+  branch=${{ github.ref_name }}
+
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "Modo de execução"
+        description: "Execution mode"
         type: choice
         required: true
         default: parallel
-        options: [parallel, single]
+        options:
+          - parallel
+          - single
 
       run_login:
-        description: "Run Login✔️"
+        description: "Run Login ✔️"
         type: boolean
         required: false
         default: false
+
       run_transfer:
-        description: "Run Transfer✔️"
+        description: "Run Transfer ✔️"
         type: boolean
         required: false
         default: false
+
       run_billpay:
-        description: "Run BillPay✔️"
+        description: "Run BillPay ✔️"
         type: boolean
         required: false
         default: false
+
       run_opennewaccount:
-        description: "Run OpenNewAccount✔️"
+        description: "Run OpenNewAccount ✔️"
         type: boolean
         required: false
         default: false
+
       run_updateprofile:
-        description: "Run UpdateProfile✔️"
+        description: "Run UpdateProfile ✔️"
         type: boolean
         required: false
         default: false
 
       tag_filter:
-        description: "Filtro por tag"
+        description: "Include tag filter"
         type: choice
         required: true
         default: all
-        options: [all, positive, negative, custom]
+        options:
+          - all
+          - positive
+          - negative
+          - smoke
+          - regression
+          - custom
 
       custom_tags:
-        description: "Se tag_filter=custom: informe tags separadas por vírgula (ex: Positive,Smoke)"
+        description: "If tag_filter=custom, provide tags separated by comma (ex: Positive,Smoke)"
+        required: false
+        default: ""
+
+      exclude_tags:
+        description: "Tags to exclude, separated by comma (optional)"
         required: false
         default: ""
 
@@ -54,7 +76,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: "pages-manual"
   cancel-in-progress: false
 
 env:
@@ -67,81 +89,152 @@ jobs:
     outputs:
       mode: ${{ steps.out.outputs.mode }}
       matrix: ${{ steps.out.outputs.matrix }}
-      tag_args: ${{ steps.out.outputs.tag_args }}
       single_paths: ${{ steps.out.outputs.single_paths }}
+      include_args: ${{ steps.out.outputs.include_args }}
+      exclude_args: ${{ steps.out.outputs.exclude_args }}
+      robot_args: ${{ steps.out.outputs.robot_args }}
       has_suites: ${{ steps.out.outputs.has_suites }}
+      selected_slugs: ${{ steps.out.outputs.selected_slugs }}
+      selected_count: ${{ steps.out.outputs.selected_count }}
+
     steps:
-      - name: Build suite selection + tag args
+      - name: Build suite selection and tag filters
         id: out
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
 
           MODE="${{ github.event.inputs.mode }}"
           TAG_FILTER="${{ github.event.inputs.tag_filter }}"
           CUSTOM_TAGS="${{ github.event.inputs.custom_tags }}"
+          EXCLUDE_TAGS="${{ github.event.inputs.exclude_tags }}"
 
           echo "mode=$MODE" >> "$GITHUB_OUTPUT"
 
-          # ---------- tag args ----------
-          TAG_ARGS=""
-          if [ "$TAG_FILTER" = "positive" ]; then
-            TAG_ARGS="--include Positive"
-          elif [ "$TAG_FILTER" = "negative" ]; then
-            TAG_ARGS="--include Negative"
-          elif [ "$TAG_FILTER" = "custom" ]; then
-            IFS=',' read -ra arr <<< "$CUSTOM_TAGS"
-            for t in "${arr[@]}"; do
-              tt="$(echo "$t" | xargs)"
-              [ -n "$tt" ] && TAG_ARGS="$TAG_ARGS --include $tt"
-            done
-            TAG_ARGS="$(echo "$TAG_ARGS" | xargs)"
-          fi
-          echo "tag_args=$TAG_ARGS" >> "$GITHUB_OUTPUT"
+          # -----------------------------
+          # Include args
+          # -----------------------------
+          INCLUDE_ARGS=""
+          case "$TAG_FILTER" in
+            all)
+              INCLUDE_ARGS=""
+              ;;
+            positive)
+              INCLUDE_ARGS="--include Positive"
+              ;;
+            negative)
+              INCLUDE_ARGS="--include Negative"
+              ;;
+            smoke)
+              INCLUDE_ARGS="--include Smoke"
+              ;;
+            regression)
+              INCLUDE_ARGS="--include Regression"
+              ;;
+            custom)
+              IFS=',' read -ra arr <<< "$CUSTOM_TAGS"
+              for t in "${arr[@]}"; do
+                tt="$(echo "$t" | xargs)"
+                [ -n "$tt" ] && INCLUDE_ARGS="$INCLUDE_ARGS --include $tt"
+              done
+              INCLUDE_ARGS="$(echo "$INCLUDE_ARGS" | xargs)"
+              ;;
+          esac
 
-          # ---------- selected suites ----------
+          # -----------------------------
+          # Exclude args
+          # -----------------------------
+          EXCLUDE_ARGS=""
+          IFS=',' read -ra ex_arr <<< "$EXCLUDE_TAGS"
+          for t in "${ex_arr[@]}"; do
+            tt="$(echo "$t" | xargs)"
+            [ -n "$tt" ] && EXCLUDE_ARGS="$EXCLUDE_ARGS --exclude $tt"
+          done
+          EXCLUDE_ARGS="$(echo "$EXCLUDE_ARGS" | xargs)"
+
+          ROBOT_ARGS="$(echo "$INCLUDE_ARGS $EXCLUDE_ARGS" | xargs)"
+
+          echo "include_args=$INCLUDE_ARGS" >> "$GITHUB_OUTPUT"
+          echo "exclude_args=$EXCLUDE_ARGS" >> "$GITHUB_OUTPUT"
+          echo "robot_args=$ROBOT_ARGS" >> "$GITHUB_OUTPUT"
+
+          # -----------------------------
+          # Selected suites
+          # -----------------------------
           suites=()
           paths=()
+          slugs=()
 
           if [ "${{ github.event.inputs.run_login }}" = "true" ]; then
             suites+=('{"path":"Resources/Login","slug":"Resources-Login"}')
             paths+=("Resources/Login")
+            slugs+=("Resources-Login")
           fi
 
           if [ "${{ github.event.inputs.run_transfer }}" = "true" ]; then
             suites+=('{"path":"Resources/Transfer","slug":"Resources-Transfer"}')
             paths+=("Resources/Transfer")
+            slugs+=("Resources-Transfer")
           fi
 
           if [ "${{ github.event.inputs.run_billpay }}" = "true" ]; then
             suites+=('{"path":"Resources/BillPay","slug":"Resources-BillPay"}')
             paths+=("Resources/BillPay")
+            slugs+=("Resources-BillPay")
           fi
 
           if [ "${{ github.event.inputs.run_opennewaccount }}" = "true" ]; then
             suites+=('{"path":"Resources/OpenNewAccount","slug":"Resources-OpenNewAccount"}')
             paths+=("Resources/OpenNewAccount")
+            slugs+=("Resources-OpenNewAccount")
           fi
 
           if [ "${{ github.event.inputs.run_updateprofile }}" = "true" ]; then
             suites+=('{"path":"Resources/UpdateProfile","slug":"Resources-UpdateProfile"}')
             paths+=("Resources/UpdateProfile")
+            slugs+=("Resources-UpdateProfile")
           fi
 
           if [ "${#suites[@]}" -eq 0 ]; then
             echo "has_suites=false" >> "$GITHUB_OUTPUT"
+            echo "selected_count=0" >> "$GITHUB_OUTPUT"
+            echo "selected_slugs=" >> "$GITHUB_OUTPUT"
             echo "matrix=[]" >> "$GITHUB_OUTPUT"
             echo "single_paths=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           echo "has_suites=true" >> "$GITHUB_OUTPUT"
+          echo "selected_count=${#suites[@]}" >> "$GITHUB_OUTPUT"
 
           MATRIX_JSON="[$(IFS=,; echo "${suites[*]}")]"
           echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
 
           SINGLE_PATHS="$(printf "%s " "${paths[@]}" | xargs)"
           echo "single_paths=$SINGLE_PATHS" >> "$GITHUB_OUTPUT"
+
+          SELECTED_SLUGS="$(IFS=,; echo "${slugs[*]}")"
+          echo "selected_slugs=$SELECTED_SLUGS" >> "$GITHUB_OUTPUT"
+
+      - name: Debug selection
+        shell: bash
+        run: |
+          echo "Mode.............: ${{ steps.out.outputs.mode }}"
+          echo "Has suites.......: ${{ steps.out.outputs.has_suites }}"
+          echo "Selected count...: ${{ steps.out.outputs.selected_count }}"
+          echo "Selected slugs...: ${{ steps.out.outputs.selected_slugs }}"
+          echo "Matrix...........: ${{ steps.out.outputs.matrix }}"
+          echo "Single paths.....: ${{ steps.out.outputs.single_paths }}"
+          echo "Include args.....: ${{ steps.out.outputs.include_args }}"
+          echo "Exclude args.....: ${{ steps.out.outputs.exclude_args }}"
+          echo "Robot args.......: ${{ steps.out.outputs.robot_args }}"
+
+      - name: Fail when no feature is selected
+        if: ${{ steps.out.outputs.has_suites != 'true' }}
+        shell: bash
+        run: |
+          echo "::error::Nenhuma feature foi selecionada. Marque ao menos uma suíte para execução."
+          exit 1
 
   robot-parallel:
     needs: prepare
@@ -161,6 +254,14 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -175,6 +276,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
 
+      - name: Debug current suite
+        run: |
+          echo "Running suite path: ${{ matrix.suite.path }}"
+          echo "Running suite slug: ${{ matrix.suite.slug }}"
+          echo "Robot args........: ${{ needs.prepare.outputs.robot_args }}"
+
+      - name: Validate suite path
+        shell: bash
+        run: |
+          test -d "${{ matrix.suite.path }}" || { echo "::error::Suite path not found: ${{ matrix.suite.path }}"; exit 1; }
+
       - name: Run Robot (headless - parallel)
         shell: bash
         run: |
@@ -182,7 +294,7 @@ jobs:
           OUT="${{ env.RESULTS_DIR }}/${{ matrix.suite.slug }}"
           mkdir -p "$OUT"
 
-          robot -d "$OUT" -v HEADLESS:True ${{ needs.prepare.outputs.tag_args }} "${{ matrix.suite.path }}"
+          robot -d "$OUT" -v HEADLESS:True ${{ needs.prepare.outputs.robot_args }} "${{ matrix.suite.path }}"
 
           echo $? > "$OUT/robot.exitcode"
           set -e
@@ -199,6 +311,7 @@ jobs:
     needs: prepare
     if: ${{ needs.prepare.outputs.mode == 'single' && needs.prepare.outputs.has_suites == 'true' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -208,6 +321,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
@@ -223,6 +344,22 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
 
+      - name: Debug selected suites
+        run: |
+          echo "Mode.............: ${{ needs.prepare.outputs.mode }}"
+          echo "Selected count...: ${{ needs.prepare.outputs.selected_count }}"
+          echo "Selected slugs...: ${{ needs.prepare.outputs.selected_slugs }}"
+          echo "Single paths.....: ${{ needs.prepare.outputs.single_paths }}"
+          echo "Robot args.......: ${{ needs.prepare.outputs.robot_args }}"
+
+      - name: Validate selected suite paths
+        shell: bash
+        run: |
+          read -r -a SUITE_PATHS <<< "${{ needs.prepare.outputs.single_paths }}"
+          for p in "${SUITE_PATHS[@]}"; do
+            test -d "$p" || { echo "::error::Suite path not found: $p"; exit 1; }
+          done
+
       - name: Run Robot (headless - single job, selected suites only)
         shell: bash
         run: |
@@ -235,7 +372,7 @@ jobs:
           echo "Selected suites:"
           printf ' - %s\n' "${SUITE_PATHS[@]}"
 
-          robot -d "$OUT" -v HEADLESS:True ${{ needs.prepare.outputs.tag_args }} "${SUITE_PATHS[@]}"
+          robot -d "$OUT" -v HEADLESS:True ${{ needs.prepare.outputs.robot_args }} "${SUITE_PATHS[@]}"
 
           echo $? > "$OUT/robot.exitcode"
           set -e
@@ -252,6 +389,7 @@ jobs:
     if: always()
     needs: [robot-parallel, robot-single]
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -279,7 +417,8 @@ jobs:
           done
 
           python - <<'PY'
-          import os, pathlib
+          import os
+          import pathlib
 
           site = pathlib.Path("site")
           run_id = os.getenv("GITHUB_RUN_ID", "")
@@ -298,7 +437,11 @@ jobs:
           runs = sorted([p.name for p in runs_root.iterdir() if p.is_dir()], reverse=True) if runs_root.exists() else []
 
           (site / "index.html").write_text(
-              "<!doctype html><html><head><meta charset='utf-8'><title>Robot Reports</title></head><body>"
+              "<!doctype html><html><head><meta charset='utf-8'><title>Robot Reports</title>"
+              "<style>body{font-family:Arial,sans-serif;max-width:980px;margin:40px auto;padding:0 16px;line-height:1.5}"
+              "h1,h2{color:#222} a{color:#0b57d0;text-decoration:none} a:hover{text-decoration:underline}"
+              "ul{padding-left:20px} code{background:#f4f4f4;padding:2px 6px;border-radius:4px}</style>"
+              "</head><body>"
               "<h1>Robot Framework Reports</h1>"
               "<p><b>Latest:</b> <a href='./latest/'>abrir</a></p>"
               f"<p><b>This run:</b> <a href='./runs/{run_id}/'>abrir</a></p>"
@@ -307,13 +450,27 @@ jobs:
               encoding="utf-8"
           )
 
-          html = ["<!doctype html><html><head><meta charset='utf-8'><title>Latest</title></head><body><h2>Latest</h2><ul>"]
+          html = [
+              "<!doctype html><html><head><meta charset='utf-8'><title>Latest</title>"
+              "<style>body{font-family:Arial,sans-serif;max-width:980px;margin:40px auto;padding:0 16px;line-height:1.5}"
+              "h1,h2{color:#222} a{color:#0b57d0;text-decoration:none} a:hover{text-decoration:underline}"
+              "ul{padding-left:20px} code{background:#f4f4f4;padding:2px 6px;border-radius:4px}</style>"
+              "</head><body>",
+              "<h2>Latest</h2><ul>"
+          ]
           for slug, log, rep in latest_items:
               html.append(f"<li><b>{slug}</b> — <a href='{log}'>log</a> | <a href='{rep}'>report</a></li>")
           html.append("</ul><p><a href='../'>voltar</a></p></body></html>")
           (site / "latest" / "index.html").write_text("\n".join(html), encoding="utf-8")
 
-          html = ["<!doctype html><html><head><meta charset='utf-8'><title>Runs</title></head><body><h2>Runs</h2><ul>"]
+          html = [
+              "<!doctype html><html><head><meta charset='utf-8'><title>Runs</title>"
+              "<style>body{font-family:Arial,sans-serif;max-width:980px;margin:40px auto;padding:0 16px;line-height:1.5}"
+              "h1,h2{color:#222} a{color:#0b57d0;text-decoration:none} a:hover{text-decoration:underline}"
+              "ul{padding-left:20px} code{background:#f4f4f4;padding:2px 6px;border-radius:4px}</style>"
+              "</head><body>",
+              "<h2>Runs</h2><ul>"
+          ]
           for r in runs[:50]:
               html.append(f"<li><a href='./{r}/'>{r}</a></li>")
           html.append("</ul><p><a href='../'>voltar</a></p></body></html>")
@@ -322,8 +479,14 @@ jobs:
           run_dir = site / "runs" / run_id
           run_dir.mkdir(parents=True, exist_ok=True)
           items = suite_links(run_dir, ".")
-          html = ["<!doctype html><html><head><meta charset='utf-8'><title>This Run</title></head><body>",
-                  f"<h2>Run {run_id}</h2><ul>"]
+          html = [
+              "<!doctype html><html><head><meta charset='utf-8'><title>This Run</title>"
+              "<style>body{font-family:Arial,sans-serif;max-width:980px;margin:40px auto;padding:0 16px;line-height:1.5}"
+              "h1,h2{color:#222} a{color:#0b57d0;text-decoration:none} a:hover{text-decoration:underline}"
+              "ul{padding-left:20px} code{background:#f4f4f4;padding:2px 6px;border-radius:4px}</style>"
+              "</head><body>",
+              f"<h2>Run {run_id}</h2><ul>"
+          ]
           for slug, log, rep in items:
               html.append(f"<li><b>{slug}</b> — <a href='{log}'>log</a> | <a href='{rep}'>report</a></li>")
           html.append("</ul><p><a href='../'>voltar</a></p></body></html>")
