@@ -3,12 +3,14 @@ Resource    ../../Settings/main.robot
 Resource    LocatorsLogin.robot
 
 *** Variables ***
-${USUARIO_VALIDO}                    john
-${SENHA_VALIDO}                      demo
+${USUARIO_VALIDO}                    test
+${SENHA_VALIDO}                      test
 ${USUARIO_INVALIDO}                  teste
 ${SENHA_INVALIDO}                    teste
 ${MSG_ERROR_USER}                    The username and password could not be verified.        
 ${MSG_ERROR_FIELD}                   Please enter a username and password.
+
+###john demo
 
 *** Keywords ***
 Dado que o usuário esteja na tela de Login
