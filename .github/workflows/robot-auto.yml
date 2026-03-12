@@ -20,7 +20,7 @@ env:
   RESULTS_DIR: "Results"
 
 jobs:
-  prepare:
+    prepare:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
@@ -30,13 +30,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          json='[
-            {"path":"Resources/Login","slug":"Resources-Login"},
-            {"path":"Resources/Transfer","slug":"Resources-Transfer"},
-            {"path":"Resources/BillPay","slug":"Resources-BillPay"},
-            {"path":"Resources/OpenNewAccount","slug":"Resources-OpenNewAccount"},
-            {"path":"Resources/UpdateProfile","slug":"Resources-UpdateProfile"}
-          ]'
+          json='[{"path":"Resources/Login","slug":"Resources-Login"},{"path":"Resources/Transfer","slug":"Resources-Transfer"},{"path":"Resources/BillPay","slug":"Resources-BillPay"},{"path":"Resources/OpenNewAccount","slug":"Resources-OpenNewAccount"},{"path":"Resources/UpdateProfile","slug":"Resources-UpdateProfile"}]'
           echo "matrix=$json" >> "$GITHUB_OUTPUT"
 
   robot-parallel:
