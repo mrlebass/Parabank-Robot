@@ -11,27 +11,27 @@ on:
         options: [parallel, single]
 
       run_login:
-        description: "Rodar feature Login?"
+        description: "Run Login✔️"
         type: boolean
         required: false
         default: false
       run_transfer:
-        description: "Rodar feature Transfer?"
+        description: "Run Transfer✔️"
         type: boolean
         required: false
         default: false
       run_billpay:
-        description: "Rodar feature BillPay?"
+        description: "Run BillPay✔️"
         type: boolean
         required: false
         default: false
       run_opennewaccount:
-        description: "Rodar feature OpenNewAccount?"
+        description: "Run OpenNewAccount✔️"
         type: boolean
         required: false
         default: false
       run_updateprofile:
-        description: "Rodar feature UpdateProfile?"
+        description: "Run UpdateProfile✔️"
         type: boolean
         required: false
         default: false
