@@ -7,12 +7,12 @@ on:
     branches: ["main"]
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: "pages-auto"
   cancel-in-progress: false
 
 env:
@@ -50,6 +50,14 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -63,6 +71,16 @@ jobs:
           echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
+
+      - name: Debug current suite
+        run: |
+          echo "Running suite path: ${{ matrix.suite.path }}"
+          echo "Running suite slug: ${{ matrix.suite.slug }}"
+
+      - name: Validate suite path
+        shell: bash
+        run: |
+          test -d "${{ matrix.suite.path }}" || { echo "::error::Suite path not found: ${{ matrix.suite.path }}"; exit 1; }
 
       - name: Run Robot (headless) - auto parallel
         shell: bash
@@ -82,19 +100,27 @@ jobs:
           path: ${{ env.RESULTS_DIR }}/${{ matrix.suite.slug }}/**
           retention-days: 14
 
-  publish-pages:
+  build-pages:
     if: always()
     needs: [robot-parallel]
     runs-on: ubuntu-latest
+    outputs:
+      site_ready: ${{ steps.validate.outputs.site_ready }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: _artifacts
+
+      - name: Show downloaded artifacts
+        shell: bash
+        run: |
+          echo "Artifacts directory structure:"
+          find _artifacts -maxdepth 4 -type f | sort || true
 
       - name: Build Pages site (latest + runs/<run_id>)
         shell: bash
@@ -118,7 +144,7 @@ jobs:
           import pathlib
 
           site = pathlib.Path("site")
-          run_id = os.environ.get("RUN", "") or os.getenv("GITHUB_RUN_ID", "")
+          run_id = os.getenv("GITHUB_RUN_ID", "")
 
           def suite_links(folder: pathlib.Path, prefix: str):
               items = []
@@ -131,57 +157,114 @@ jobs:
                           items.append((slug, log, rep))
               return items
 
+          base_style = (
+              "<style>"
+              "body{font-family:Arial,sans-serif;max-width:980px;margin:40px auto;padding:0 16px;line-height:1.5}"
+              "h1,h2{color:#222}"
+              "a{color:#0b57d0;text-decoration:none}"
+              "a:hover{text-decoration:underline}"
+              "ul{padding-left:20px}"
+              "code{background:#f4f4f4;padding:2px 6px;border-radius:4px}"
+              ".empty{padding:16px;background:#fafafa;border:1px solid #ddd;border-radius:8px;color:#555}"
+              "</style>"
+          )
+
           latest_items = suite_links(site / "latest", "./latest")
           runs_root = site / "runs"
           runs = sorted([p.name for p in runs_root.iterdir() if p.is_dir()], reverse=True) if runs_root.exists() else []
 
           (site / "index.html").write_text(
-              "<!doctype html><html><head><meta charset='utf-8'><title>Robot Reports</title></head><body>"
-              "<h1>Robot Framework Reports</h1>"
-              "<p><b>Latest:</b> <a href='./latest/'>abrir</a></p>"
-              f"<p><b>This run:</b> <a href='./runs/{run_id}/'>abrir</a></p>"
-              "<p><b>Runs:</b> <a href='./runs/'>abrir histórico</a></p>"
-              "</body></html>",
+              "\n".join([
+                  "<!doctype html><html><head><meta charset='utf-8'><title>Robot Reports</title>",
+                  base_style,
+                  "</head><body>",
+                  "<h1>Robot Framework Reports</h1>",
+                  "<p><b>Latest:</b> <a href='./latest/'>abrir</a></p>",
+                  f"<p><b>This run:</b> <a href='./runs/{run_id}/'>abrir</a></p>",
+                  "<p><b>Runs:</b> <a href='./runs/'>abrir histórico</a></p>",
+                  "</body></html>",
+              ]),
               encoding="utf-8"
           )
 
           html = [
-              "<!doctype html><html><head><meta charset='utf-8'><title>Latest</title></head><body>",
-              "<h2>Latest</h2><ul>"
+              "<!doctype html><html><head><meta charset='utf-8'><title>Latest</title>",
+              base_style,
+              "</head><body>",
+              "<h2>Latest</h2>",
           ]
-          for slug, log, rep in latest_items:
-              html.append(f"<li><b>{slug}</b> — <a href='{log}'>log</a> | <a href='{rep}'>report</a></li>")
-          html.append("</ul><p><a href='../'>voltar</a></p></body></html>")
+          if latest_items:
+              html.append("<ul>")
+              for slug, log, rep in latest_items:
+                  html.append(f"<li><b>{slug}</b> — <a href='{log}'>log</a> | <a href='{rep}'>report</a></li>")
+              html.append("</ul>")
+          else:
+              html.append("<div class='empty'>Nenhum report encontrado em <code>latest/</code>.</div>")
+          html.append("<p><a href='../'>voltar</a></p></body></html>")
           (site / "latest" / "index.html").write_text("\n".join(html), encoding="utf-8")
 
           html = [
-              "<!doctype html><html><head><meta charset='utf-8'><title>Runs</title></head><body>",
-              "<h2>Runs</h2><ul>"
+              "<!doctype html><html><head><meta charset='utf-8'><title>Runs</title>",
+              base_style,
+              "</head><body>",
+              "<h2>Runs</h2>",
           ]
-          for r in runs[:50]:
-              html.append(f"<li><a href='./{r}/'>{r}</a></li>")
-          html.append("</ul><p><a href='../'>voltar</a></p></body></html>")
+          if runs:
+              html.append("<ul>")
+              for r in runs[:50]:
+                  html.append(f"<li><a href='./{r}/'>{r}</a></li>")
+              html.append("</ul>")
+          else:
+              html.append("<div class='empty'>Nenhuma execução histórica encontrada.</div>")
+          html.append("<p><a href='../'>voltar</a></p></body></html>")
           (site / "runs" / "index.html").write_text("\n".join(html), encoding="utf-8")
 
           run_dir = site / "runs" / run_id
           run_dir.mkdir(parents=True, exist_ok=True)
           items = suite_links(run_dir, ".")
           html = [
-              "<!doctype html><html><head><meta charset='utf-8'><title>This Run</title></head><body>",
-              f"<h2>Run {run_id}</h2><ul>"
+              "<!doctype html><html><head><meta charset='utf-8'><title>This Run</title>",
+              base_style,
+              "</head><body>",
+              f"<h2>Run {run_id}</h2>",
           ]
-          for slug, log, rep in items:
-              html.append(f"<li><b>{slug}</b> — <a href='{log}'>log</a> | <a href='{rep}'>report</a></li>")
-          html.append("</ul><p><a href='../'>voltar</a></p></body></html>")
+          if items:
+              html.append("<ul>")
+              for slug, log, rep in items:
+                  html.append(f"<li><b>{slug}</b> — <a href='{log}'>log</a> | <a href='{rep}'>report</a></li>")
+              html.append("</ul>")
+          else:
+              html.append("<div class='empty'>Nenhum report encontrado para esta execução.</div>")
+          html.append("<p><a href='../'>voltar</a></p></body></html>")
           (run_dir / "index.html").write_text("\n".join(html), encoding="utf-8")
           PY
-        env:
-          RUN: ${{ github.run_id }}
 
-      - name: Publish to gh-pages (preserve history)
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Validate generated site
+        id: validate
+        shell: bash
+        run: |
+          set -e
+          test -f site/index.html || { echo "::error::site/index.html not found"; exit 1; }
+          test -f site/latest/index.html || { echo "::error::site/latest/index.html not found"; exit 1; }
+          test -f site/runs/index.html || { echo "::error::site/runs/index.html not found"; exit 1; }
+          echo "Generated site structure:"
+          find site -maxdepth 4 -type f | sort
+          echo "site_ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: site
-          keep_files: true
+          path: ./site
+
+  deploy-pages:
+    if: ${{ always() && github.event_name != 'pull_request' && needs.build-pages.outputs.site_ready == 'true' }}
+    needs: [build-pages]
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
