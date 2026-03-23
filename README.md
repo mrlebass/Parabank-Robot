@@ -35,7 +35,7 @@ Make sure you have the following installed:
 - **Python 3.10+**
 - **pip** (comes with Python)
 - **Google Chrome** (or another supported browser)
-- **ChromeDriver** (compatible with your Chrome version) .
+- **ChromeDriver** (compatible with your Chrome version)
 
 > 💡 Tip:
 > <br> You can also use a **WebDriver Manager** approach depending on your setup.
