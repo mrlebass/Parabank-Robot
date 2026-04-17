@@ -258,10 +258,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Install Google Chrome
+      - name: Install Google Chrome & system deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget gnupg
+          sudo apt-get install -y wget gnupg xvfb libgl1-mesa-glx
           wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-linux-keyring.gpg
           echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
           sudo apt-get update
@@ -285,7 +285,7 @@ jobs:
           OUT="${{ env.RESULTS_DIR }}/${{ matrix.suite.slug }}"
           mkdir -p "$OUT"
 
-          robot -d "$OUT" -v HEADLESS:True ${{ needs.prepare.outputs.robot_args }} "${{ matrix.suite.path }}"
+          xvfb-run robot -d "$OUT" -v HEADLESS:True ${{ needs.prepare.outputs.robot_args }} "${{ matrix.suite.path }}"
 
           echo $? > "$OUT/robot.exitcode"
           set -e
@@ -326,10 +326,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Install Google Chrome
+      - name: Install Google Chrome & system deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget gnupg
+          sudo apt-get install -y wget gnupg xvfb libgl1-mesa-glx
           wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-linux-keyring.gpg
           echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
           sudo apt-get update
@@ -363,7 +363,7 @@ jobs:
           echo "Selected suites:"
           printf ' - %s\n' "${SUITE_PATHS[@]}"
 
-          robot -d "$OUT" -v HEADLESS:True ${{ needs.prepare.outputs.robot_args }} "${SUITE_PATHS[@]}"
+          xvfb-run robot -d "$OUT" -v HEADLESS:True ${{ needs.prepare.outputs.robot_args }} "${SUITE_PATHS[@]}"
 
           echo $? > "$OUT/robot.exitcode"
           set -e
