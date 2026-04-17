@@ -15,10 +15,10 @@ ${VALOR_TRANSFERENCIA_TEXTO}                                   abc
 Accounts Overview
     [Arguments]                      ${conta_origem}            ${conta_destino}           ${quantidade}
     Click Element                    ${BTN_OVERVIEW}
-    Esperar elemento visivel    ${PAINEL_DIREITA}          10s
-    Esperar elemento visivel    ${TABELA_TRANSFERENCIA}    10s
-    Esperar elemento visivel    ${TABLE_ACCOUNT}           10s
-    Esperar elemento visivel    ${TABLE_BALANCE}           10s
+    Wait Until Element Is Visible    ${PAINEL_DIREITA}          10s
+    Wait Until Element Is Visible    ${TABELA_TRANSFERENCIA}    10s
+    Wait Until Element Is Visible    ${TABLE_ACCOUNT}           10s
+    Wait Until Element Is Visible    ${TABLE_BALANCE}           10s
     # Element Should Contain           ${TABELA_TRANSFERENCIA}    ${conta_origem}            ${conta_destino}          ${quantidade}
     
     ### Sem Sleep: espera a tabela "refletir" os dados ###          Sleep                            5s
@@ -29,16 +29,16 @@ Accounts Overview
 
 
 Dado que o usuário esteja na página de transferência
-    Esperar elemento visivel    ${TRANSFER_FUNDS}       10s
+    Wait Until Element Is Visible    ${TRANSFER_FUNDS}       10s
     Click Element                    ${TRANSFER_FUNDS}
-    Esperar elemento visivel    ${AMOUNT_FIELD}         10s
+    Wait Until Element Is Visible    ${AMOUNT_FIELD}         10s
 
 Quando ele preenche os campos de transferência
     [Arguments]    ${conta_origem}    ${conta_destino}    ${quantidade}
 
-    Esperar elemento visivel    ${FROM_ACCOUNT}    10s
-    Esperar elemento visivel    ${TO_ACCOUNT}      10s
-    Esperar elemento visivel    ${AMOUNT_FIELD}    10s
+    Wait Until Element Is Visible    ${FROM_ACCOUNT}    10s
+    Wait Until Element Is Visible    ${TO_ACCOUNT}      10s
+    Wait Until Element Is Visible    ${AMOUNT_FIELD}    10s
 
     ${conta_origem}=     Convert To String    ${conta_origem}
     ${conta_destino}=    Convert To String    ${conta_destino}
@@ -51,9 +51,9 @@ E envia a transferência
     Click Button    ${BTN_TRANSFER}
 
 Então a transferência deve ser realizada corretamente
-    Esperar elemento visivel    ${MENSAGEM_SUCESSO}        10s
+    Wait Until Element Is Visible    ${MENSAGEM_SUCESSO}        10s
     Element Should Be Visible        ${MENSAGEM_SUCESSO}
 
 Então a transferência NÃO deve ser realizada
-    Esperar elemento visivel    ${MENSAGEM_ERRO2}           10s
+    Wait Until Element Is Visible    ${MENSAGEM_ERRO2}           10s
     Element Should Be Enabled        ${MENSAGEM_ERRO2}

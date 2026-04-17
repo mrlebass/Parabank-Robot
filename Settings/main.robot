@@ -4,7 +4,6 @@
 Library    SeleniumLibrary
 Library    XML
 Library    Screenshot
-Library    ScreenCapLibrary
 
 ## Resources ##
 Resource    ../Resources/Common/Common.robot
