@@ -13,9 +13,6 @@ ${HEADLESS}     False
 Dado que eu acesse o site Parabank
     ${options}=    Criar Opcoes Do Browser
     Open Browser   ${BASE_URL_QAA}    ${BROWSER}    options=${options}
-    IF    '${HEADLESS}' != 'True'
-        Maximize Browser Window
-    END
     Set Selenium Timeout    10s
 
 
@@ -26,13 +23,15 @@ Criar Opcoes Do Browser
         ...    sys.modules['selenium.webdriver'].ChromeOptions()
         ...    sys
 
-        ${arg_window}=    Set Variable    --window-size=1920,1080
-        ${arg_dev_shm}=   Set Variable    --disable-dev-shm-usage
-        ${arg_sandbox}=   Set Variable    --no-sandbox
+        ${arg_window}=      Set Variable    --window-size=1920,1080
+        ${arg_dev_shm}=     Set Variable    --disable-dev-shm-usage
+        ${arg_sandbox}=     Set Variable    --no-sandbox
+        ${arg_maximized}=   Set Variable    --start-maximized
 
         Call Method    ${options}    add_argument    ${arg_window}
         Call Method    ${options}    add_argument    ${arg_dev_shm}
         Call Method    ${options}    add_argument    ${arg_sandbox}
+        Call Method    ${options}    add_argument    ${arg_maximized}
 
         ${headless}=   Evaluate    str('${HEADLESS}').lower() in ['true','1','yes']
         IF    ${headless}
