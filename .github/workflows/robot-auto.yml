@@ -88,7 +88,7 @@ jobs:
           set +e
           OUT="${{ env.RESULTS_DIR }}/${{ matrix.suite.slug }}"
           mkdir -p "$OUT"
-          xvfb-run robot -d "$OUT" -v HEADLESS:True "${{ matrix.suite.path }}"
+          xvfb-run robot -d "$OUT" "${{ matrix.suite.path }}"
           echo $? > "$OUT/robot.exitcode"
           set -e
 

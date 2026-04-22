@@ -4,15 +4,32 @@ Resource   ../../Resources/Login/KeywordsLogin.robot
 
 ## Libraries ##
 Library    OperatingSystem
+Library    Collections
+
 
 
 *** Keywords ***
 
-# Capturar Print Na Pasta Da Funcionalidade
-#     [Arguments]    ${nome_arquivo}    ${caminho_da_pasta}
-#     ${dir}=    Set Variable    ${EXECDIR}/${caminho_da_pasta}
-#     Create Directory    ${dir}
-#     Capture Page Screenshot    ${dir}/${nome_arquivo}.png
+# ──────────────────────────────────────────────
+#  EVIDÊNCIA EM VÍDEO
+# ──────────────────────────────────────────────
+
+Iniciar Gravacao De Video
+    [Documentation]    Inicia a gravação de vídeo para o test case atual.
+    ...                O vídeo será salvo na pasta Evidences/<feature> com o nome do teste.
+    [Arguments]    ${feature}=General
+    ${dir}=    Set Variable    ${OUTPUT DIR}${/}Evidences${/}${feature}
+    Create Directory    ${dir}
+    ${filename}=    Set Variable    ${dir}${/}${TEST NAME}.webm
+    Start Video Recording    name=${filename}
+
+Parar Gravacao De Video
+    [Documentation]    Para a gravação de vídeo e salva o arquivo.
+    Stop Video Recording
+
+# ──────────────────────────────────────────────
+#  EVIDÊNCIA EM SCREENSHOT
+# ──────────────────────────────────────────────
 
 Capturar Print Na Pasta Da Funcionalidade
     [Arguments]    ${nome_arquivo}    ${feature}=General
@@ -23,20 +40,28 @@ Capturar Print Na Pasta Da Funcionalidade
     Capture Page Screenshot    ${file}
 
 
-
 Esperar Elemento Visivel
     [Arguments]    ${locator}    ${timeout}=10s
     Wait Until Element Is Visible    ${locator}    ${timeout}
 
 Teardown Padrao
+    # Para a gravação de vídeo (se estiver ativa)
+    Run Keyword And Ignore Error    Parar Gravacao De Video
     # Se falhar, salva evidência automática no output do Robot (Results)
     Run Keyword If Test Failed    Capture Page Screenshot    ${OUTPUTDIR}/FAIL_${TEST NAME}.png
     Close Browser
 
 
 Iniciar Sessao Autenticada
+    [Arguments]    ${feature}=General
+    Iniciar Gravacao De Video    ${feature}
     Dado que eu acesse o site Parabank
     Fazer login com Sucesso
+
+Setup Login Com Video
+    [Arguments]    ${feature}=General
+    Iniciar Gravacao De Video    ${feature}
+    Dado que eu acesse o site Parabank
 
 Fazer login com Sucesso
     Dado que o usuário esteja na tela de Login

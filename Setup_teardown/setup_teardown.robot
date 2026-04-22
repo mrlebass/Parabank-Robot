@@ -1,3 +1,6 @@
+*** Settings ***
+Library    SeleniumLibrary
+
 *** Variables ***
 
 # Defaults (podem ser sobrescritos via CLI: -v BASE_URL:... -v BROWSER:... -v HEADLESS:True)
