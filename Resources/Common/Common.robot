@@ -54,14 +54,14 @@ Teardown Padrao
 
 Iniciar Sessao Autenticada
     [Arguments]    ${feature}=General
-    Iniciar Gravacao De Video    ${feature}
     Dado que eu acesse o site Parabank
+    Iniciar Gravacao De Video    ${feature}
     Fazer login com Sucesso
 
 Setup Login Com Video
     [Arguments]    ${feature}=General
-    Iniciar Gravacao De Video    ${feature}
     Dado que eu acesse o site Parabank
+    Iniciar Gravacao De Video    ${feature}
 
 Fazer login com Sucesso
     Dado que o usuário esteja na tela de Login
